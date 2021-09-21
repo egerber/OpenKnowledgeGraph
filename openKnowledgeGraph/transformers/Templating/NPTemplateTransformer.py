@@ -1,16 +1,16 @@
+from openKnowledgeGraph.transformers.GraphOperation import GraphOperation
 from openKnowledgeGraph.queries.QuerySet import Q
 from openKnowledgeGraph.templates.ArgumentPart import ArgumentPart
 from openKnowledgeGraph.templates.NPArgument import NPArgument
 from openKnowledgeGraph.templates.Template import Template
-from openKnowledgeGraph.transformers.NodeTransformer import NodeTransformer
 from openKnowledgeGraph.transformers.Templating.NounTemplateTransformer import \
     NounTemplateTransformer
 
 
-class NPTemplateTransformer(NodeTransformer):
+class NPTemplateTransformer(GraphOperation):
 
     def __init__(self, **kwargs):
-        NodeTransformer.__init__(self, **kwargs)
+        GraphOperation.__init__(self, **kwargs)
         self._prep_template_transformer = None
         self.noun_template_transformer = NounTemplateTransformer()
 

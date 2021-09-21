@@ -1,13 +1,13 @@
+from openKnowledgeGraph.transformers.GraphOperation import GraphOperation
 from openKnowledgeGraph.templates.AdvclTemplate import AdvclTemplate
 from openKnowledgeGraph.templates.ArgumentPart import ArgumentPart
 from openKnowledgeGraph.templates.TextPart import TextPart
-from openKnowledgeGraph.transformers.NodeTransformer import NodeTransformer
 
 
-class AdvclTemplateTransformer(NodeTransformer):
+class AdvclTemplateTransformer(GraphOperation):
 
     def __init__(self, **kwargs):
-        NodeTransformer.__init__(self, **kwargs)
+        GraphOperation.__init__(self, **kwargs)
 
     def apply(self, advcl_node,*args,**kwargs):
         mark = advcl_node.get_mark()

@@ -1,3 +1,4 @@
+from openKnowledgeGraph import OpenKnowledgeGraph
 from openKnowledgeGraph.queries.QueryHelper import filter_entities
 
 DEFAULT_TEXT = "<get_text() of Entity>"
@@ -8,13 +9,35 @@ class Entity:
     Base class for Nodes and Links
     """
 
-    def __init__(self, id=None, attributes=None, **kwargs):
+    def __init__(self, graph=None,id=None, attributes=None,**kwargs):
         if attributes is None:
             attributes = {}
 
-        self._graph = None
+        if graph is None:
+            raise ValueError("reference to graph required, 'None' given")
+
+        self._graph = graph
         self.attributes = attributes
         self._id = id
+
+        if kwargs is not None:
+            for key, value in kwargs.items():
+                self.set_property(key,value)
+
+        #id and type are saved by default
+        self.set_property("id",id)
+        
+        #self.set_property("type",kwargs['type'])
+
+
+    def set_property(self,key,value):
+        raise NotImplementedError()
+
+    def get_property(self,key):
+        raise NotImplementedError()
+
+    def has_property(self,key):
+        raise NotImplementedError()
 
     def set_attributes(self, attributes):
         self.attributes = attributes
@@ -32,12 +55,18 @@ class Entity:
         return self._id is not None
 
     def set_id(self, new_id, override=False):
-        if not override and self._id is not None and not new_id == self._id:
+        if not override and self._id is not None and new_id != self._id:
             raise ValueError("Trying to override id for entity (old: {}, new: {})".format(self._id, new_id))
         elif new_id is None:
             raise ValueError("Trying to assign id=None")
 
         self._id = new_id
+
+    def has_computed_property(self,key):
+        '''
+        returns whether node has property methods that return dynamic values
+        '''
+        return key in self.get_computed_properties()
 
     @property
     def preview(self):
@@ -50,26 +79,11 @@ class Entity:
     def get_id(self):
         return self._id
 
-    '''def __setattr__(self, key, value):
-        if self.__getattr__(key) is not None:
-            raise Exception(
-                "Entity objects are not mutable. Properties cannot be changed after they have been defined (tried to set '{}' from '{}' to '{}')".format(
-                    key, self.__getattr__(key), value))
-        object.__setattr__(self, key, value)
-    '''
-
     def __getattr__(self, name):
-        if name.startswith('attr__'):
-            return self.get_attribute(name[6:])
-        else:
-            try:
-                return self.__getattribute__(name)
-            except:
-                return None  # default return if attribute does not exist
+        raise NotImplementedError()
 
-    @staticmethod
-    def get_type():
-        return "base_entity"
+    def get_type(self):
+        return self.get_property("type")
 
     def get_text(self):
         return self.text
@@ -81,23 +95,16 @@ class Entity:
             return text.lower()
         else:
             return text
-
-    @property
-    def type(self):
-        return self.get_type()
-
+    
     @property
     def graph(self):
         return self.get_graph()
 
-    def get_graph(self):
+    def get_graph(self) -> OpenKnowledgeGraph:
         return self._graph
 
-    def set_graph(self, graph):
-        self._graph = graph
-
     def __repr__(self):
-        return "<Entity ({}): {}>".format(self.get_type(), self.preview)
+        return "<Entity ({}): {}>".format(self.type, self.preview)
 
     def serialize(self):
         return None
@@ -110,6 +117,10 @@ class Entity:
 
     def __setstate__(self, d):
         self.__dict__.update(d)
+
+    @staticmethod
+    def get_computed_properties():
+        return []
 
     @staticmethod
     def from_db_object():

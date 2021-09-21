@@ -1,14 +1,14 @@
+from openKnowledgeGraph.transformers.GraphOperation import GraphOperation
 from openKnowledgeGraph.queries.QuerySet import Q
 from openKnowledgeGraph.templates.ArgumentPart import ArgumentPart
 from openKnowledgeGraph.templates.PPTemplate import PPTemplate
 from openKnowledgeGraph.templates.TextPart import TextPart
-from openKnowledgeGraph.transformers.NodeTransformer import NodeTransformer
 
 
-class PrepTemplateTransformer(NodeTransformer):
+class PrepTemplateTransformer(GraphOperation):
 
     def __init__(self, **kwargs):
-        NodeTransformer.__init__(self, **kwargs)
+        GraphOperation.__init__(self, **kwargs)
 
         from openKnowledgeGraph.transformers.Templating.NPTemplateTransformer import \
             NPTemplateTransformer

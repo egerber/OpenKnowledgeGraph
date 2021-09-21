@@ -1,9 +1,9 @@
-from openKnowledgeGraph.nodes.ReferenceNode import ReferenceNode
+from openKnowledgeGraph.nodes.Node import Node
 
 
-class IndependentClauseNode(ReferenceNode):
+class IndependentClauseNode(Node):
     def __init__(self, **kwargs):
-        ReferenceNode.__init__(self, **kwargs)
+        Node.__init__(self, **kwargs)
 
     @staticmethod
     def get_type():
@@ -16,8 +16,6 @@ class IndependentClauseNode(ReferenceNode):
     @staticmethod
     def from_vp_node(vp_node):
         graph = vp_node.get_graph()
-        ic_node = IndependentClauseNode()
-        graph.add_node(ic_node)
-        ReferenceNode.create_reference_link(ic_node, vp_node)
+        ic_node = graph.create_reference_node(reference_node=vp_node,node_type="independent_clause")
 
         return ic_node

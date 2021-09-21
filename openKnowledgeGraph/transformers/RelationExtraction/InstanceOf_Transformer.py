@@ -1,12 +1,12 @@
+from openKnowledgeGraph.transformers.GraphOperation import GraphOperation
 from openKnowledgeGraph.nodes.relations.InstanceOfRelation import InstanceOfRelation
 from openKnowledgeGraph.queries.QuerySet import Q
-from openKnowledgeGraph.transformers.NodeTransformer import NodeTransformer
 
 
-class InstanceOfTransformer(NodeTransformer):
+class InstanceOfTransformer(GraphOperation):
 
     def __init__(self, **kwargs):
-        NodeTransformer.__init__(self, **kwargs)
+        GraphOperation.__init__(self, **kwargs)
 
     def get_pattern(self):
         return Q(type="triplet",
@@ -21,3 +21,7 @@ class InstanceOfTransformer(NodeTransformer):
         group = node.object
 
         return InstanceOfRelation.from_arguments(entity=entity, group=group)
+
+    @staticmethod
+    def get_name():
+        return "instance_of"

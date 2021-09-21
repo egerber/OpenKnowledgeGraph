@@ -6,6 +6,8 @@ from openKnowledgeGraph.templates.TextPart import TextPart
 
 class PPNode(ConstituentNode):
 
+    type="pp"
+
     def __init__(self, **kwargs):
         ConstituentNode.__init__(self, **kwargs)
 
@@ -24,13 +26,9 @@ class PPNode(ConstituentNode):
         return self.find_child_by_type("preposition")
 
     @staticmethod
-    def get_type():
-        return "pp"
-
-    @staticmethod
     def from_token_node(token_node):
         graph = token_node.get_graph()
-        pp_node = PPNode(reference_node=token_node)
+        pp_node = graph.create_node("pp",properties={"reference_node":token_node})
         graph.add_node(pp_node)
 
         ConstituentNode.add_reference_link(pp_node, token_node)

@@ -1,15 +1,15 @@
+from openKnowledgeGraph.transformers.GraphOperation import GraphOperation
 from openKnowledgeGraph.queries.QuerySet import Q
 from openKnowledgeGraph.templates.ArgumentPart import ArgumentPart
 from openKnowledgeGraph.templates.NPArgument import NPArgument
 from openKnowledgeGraph.templates.TextPart import TextPart
 from openKnowledgeGraph.templates.Template import Template
-from openKnowledgeGraph.transformers.NodeTransformer import NodeTransformer
 
 
-class SbarTemplateTransformer(NodeTransformer):
+class SbarTemplateTransformer(GraphOperation):
 
     def __init__(self, **kwargs):
-        NodeTransformer.__init__(self, **kwargs)
+        GraphOperation.__init__(self, **kwargs)
 
     def get_pattern(self):
         return Q(type="sbar")

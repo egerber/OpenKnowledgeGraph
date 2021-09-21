@@ -1,12 +1,12 @@
+from openKnowledgeGraph.transformers.GraphOperation import GraphOperation
 from openKnowledgeGraph.nodes.classifications.PPTypeNode import PPTypeNode
 from openKnowledgeGraph.queries.QuerySet import Q
-from openKnowledgeGraph.transformers.NodeTransformer import NodeTransformer
 
 
-class PPTypeTransformer(NodeTransformer):
+class PPTypeTransformer(GraphOperation):
 
     def __init__(self, **kwargs):
-        NodeTransformer.__init__(self, **kwargs)
+        GraphOperation.__init__(self, **kwargs)
 
     def get_pattern(self):
         return Q(type="pp")
@@ -23,3 +23,7 @@ class PPTypeTransformer(NodeTransformer):
 
         if label is not None:
             return PPTypeNode.from_pp_node(pp_node=node, label=label)
+    
+    @staticmethod
+    def get_name():
+        return "pp_type"

@@ -1,10 +1,10 @@
+from openKnowledgeGraph.transformers.GraphOperation import GraphOperation
 from openKnowledgeGraph.queries.QuerySet import Q
-from openKnowledgeGraph.transformers.NodeTransformer import NodeTransformer
 
 
-class TripleTemplateTransformer(NodeTransformer):
+class TripleTemplateTransformer(GraphOperation):
     def __init__(self, **kwargs):
-        NodeTransformer.__init__(self, **kwargs)
+        GraphOperation.__init__(self, **kwargs)
 
     def get_pattern(self):
         return Q(type="vp")

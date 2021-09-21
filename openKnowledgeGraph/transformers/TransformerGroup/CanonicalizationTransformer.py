@@ -16,7 +16,7 @@ class CanonicalizationTransformer(GraphOperation):
         self.resolve_relcls = resolve_relcls
 
     def get_pattern(self):
-        return Q(type="vp", dep="root")
+        return Q(type="vp", is_list_element__not=True)
 
     @staticmethod
     def create_canonicalized_clause(original_vp, children):
@@ -38,6 +38,10 @@ class CanonicalizationTransformer(GraphOperation):
             pass  # TODO inherit subject from parent
 
         for child in vp_coordination.children:
+            if child.dep=="relcl":
+                root=vp_coordination.find_in_links(type="constituent").first().source
+                constituent=child.find_in_links(type="constituent").first().source
+                self.apply_vp_coordination(constituent, root)
 
             if self.resolve_corefs and child.type == "np" and child.is_corefed:
                 child = child.corefed
@@ -50,7 +54,7 @@ class CanonicalizationTransformer(GraphOperation):
                 has_subject = True
 
         if not has_subject and root is not None:  # try to inherit subject from parent
-            parent_subject = root.find_children(dep__in=["nsubj", "nsubjpass"]).first()
+            parent_subject = root.find_children(type="np",dep__in=["nsubj", "nsubjpass"]).first()
             if parent_subject:
                 combinatorical_children.append(parent_subject.get_coordinates())
 
@@ -70,3 +74,11 @@ class CanonicalizationTransformer(GraphOperation):
         else:
             canonical_phrases += self.apply_vp_coordination(vp_node, root=None)
         return canonical_phrases
+
+    @staticmethod
+    def get_dependencies():
+        return ["dependency"]
+
+    @staticmethod
+    def get_name():
+        return "canonical"

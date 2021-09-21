@@ -1,28 +1,37 @@
+import re
 from openKnowledgeGraph.nodes.Node import Node
 from openKnowledgeGraph.queries.QuerySet import Q
 
 
 class TokenNode(Node):
 
-    def __init__(self, text=None, i=None, pos=None, lemma=None, dep=None, tag=None):
-        Node.__init__(self)
-        self.text = text
-        self.i = i
-        self.pos = pos
-        self.lemma = lemma
-        self.dep = dep
-        self.tag = tag
+    type="token"
+
+    def __init__(self, text=None, i=None, pos=None, lemma=None, dep=None, tag=None,whitespace=None,**kwargs):
+        Node.__init__(self,**kwargs)
+
+        self.set_property('text',text)
+        self.set_property('i', i)
+        self.set_property('pos', pos)
+        self.set_property('lemma',lemma)
+        self.set_property('dep',dep)
+        self.set_property('tag',tag)
+        self.set_property('whitespace',whitespace)
+
+    @staticmethod
+    def get_computed_properties():
+        return ["full_text","voice","tense","number","negated"]
+
+    def clean_fulltext(self,fulltext):
+        pass
 
     @property
     def full_text(self):
         all_deps = self.traverse_by_out_links(query=Q(type="dependency")).order_by(
             lambda node: node.i)
-        full_text = [dep.text for dep in all_deps]
-        return ' '.join(full_text)
+        full_text = [f'{dep.text}{dep.whitespace}' for dep in all_deps]
 
-    @staticmethod
-    def get_type():
-        return "token"
+        return ''.join(full_text)
 
     def is_passive(self):
         return self.dep in ["nsubjpass", "csubjpass"]  # https://universaldependencies.org/u/dep/
@@ -69,7 +78,7 @@ class TokenNode(Node):
             return None
 
     def is_negated(self):
-        return bool(self.find_out_links(Q(type="dependency", attr__dependency_type="neg")).first())
+        return bool(self.find_out_links(Q(type="dependency", dependency_type="neg")).first())
 
     @property
     def preview(self):
@@ -104,6 +113,7 @@ class TokenNode(Node):
                                                                       "i": token.i,
                                                                       "pos": token.pos_.lower(),
                                                                       "tag": token.tag_.lower(),
-                                                                      "dep": token.dep_.lower()})
+                                                                      "dep": token.dep_.lower(),
+                                                                      "whitespace": token.whitespace_})
 
         return token_node

@@ -1,7 +1,7 @@
+from openKnowledgeGraph.transformers.GraphOperation import GraphOperation
 import os
 
 from openKnowledgeGraph.queries.QuerySet import Q
-from openKnowledgeGraph.transformers.NodeTransformer import NodeTransformer
 import itertools
 
 from statements.TripletNode import TripletNode
@@ -9,10 +9,10 @@ from statements.TripletNode import TripletNode
 DEBUG = os.environ.get('DEBUG', False)
 
 
-class TripletNodeTransformer(NodeTransformer):
+class TripletNodeTransformer(GraphOperation):
 
     def __init__(self, **kwargs):
-        NodeTransformer.__init__(self, **kwargs)
+        GraphOperation.__init__(self, **kwargs)
 
     @staticmethod
     def get_name():

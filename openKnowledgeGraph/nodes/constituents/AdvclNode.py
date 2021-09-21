@@ -5,12 +5,10 @@ from openKnowledgeGraph.nodes.constituents.VPNode import VPNode
 
 class AdvclNode(VPNode):
 
+    type="advcl"
+
     def __init__(self, **kwargs):
         VPNode.__init__(self, **kwargs)\
-
-    @staticmethod
-    def get_type():
-        return "advcl"
 
     def get_mark(self):
         return self.reference.find_out_nodes(type="token", dep="mark").first()
@@ -19,7 +17,7 @@ class AdvclNode(VPNode):
     def from_token_node(token_node, override_deps=None):
         graph = token_node.graph
 
-        advcl_node = AdvclNode()
+        advcl_node = graph.create_node(node_type="advcl")
         graph.add_node(advcl_node)
 
         ConstituentNode.add_reference_link(advcl_node, token_node)

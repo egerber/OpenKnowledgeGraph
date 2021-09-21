@@ -1,13 +1,13 @@
+from openKnowledgeGraph.transformers.GraphOperation import GraphOperation
 from openKnowledgeGraph.templates.ArgumentPart import ArgumentPart
 from openKnowledgeGraph.templates.TextPart import TextPart
 from openKnowledgeGraph.templates.Template import Template
-from openKnowledgeGraph.transformers.NodeTransformer import NodeTransformer
 
 
-class AdjpTemplateTransformer(NodeTransformer):
+class AdjpTemplateTransformer(GraphOperation):
 
     def __init__(self, **kwargs):
-        NodeTransformer.__init__(self, **kwargs)
+        GraphOperation.__init__(self, **kwargs)
 
         from openKnowledgeGraph.transformers.Templating.PrepTemplateTransformer import \
             PrepTemplateTransformer

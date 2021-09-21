@@ -10,8 +10,6 @@ def filter_entities_by_property(entities, property, value):
     '''
         :param entities:
         :param key:
-        PREFIXES:
-        attr__ (allows to search for attribute value (e.g. attr__my_attribute)
 
         POSTFIXES: (compare to here: https://docs.mongoengine.org/guide/querying.html)
         __in
@@ -31,7 +29,7 @@ def filter_entities_by_property(entities, property, value):
 
         example type__nin=['triplet', 'independent_clause']
         :return:
-        '''
+    '''
     if property.endswith('__in'):
         return [entity for entity in entities if entity.__getattr__(property[:-4]) in value]
     elif property.endswith('__nin'):
@@ -42,13 +40,13 @@ def filter_entities_by_property(entities, property, value):
         attribute_key = property[:-10]
         filtered_elements = []
         for entity in entities:
-            attr = entity.__getattr__(attribute_key)
-            if attr and value in attr:
+            property_value = entity.get_property(attribute_key)
+            if property_value and value in property_value:
                 filtered_elements.append(entity)
 
         return filtered_elements
     else:
-        return [entity for entity in entities if entity.__getattr__(property) == value]
+        return [entity for entity in entities if entity.get_property(property) == value]
 
 
 def filter_entities_by_single_filter(entities, key, value):

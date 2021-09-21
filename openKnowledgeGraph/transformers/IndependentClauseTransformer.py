@@ -1,13 +1,13 @@
+from openKnowledgeGraph.transformers.GraphOperation import GraphOperation
 from openKnowledgeGraph.links.Link import Link
 from openKnowledgeGraph.nodes.highlevel.IndependentClauseNode import IndependentClauseNode
 from openKnowledgeGraph.nodes.Node import Node
 from openKnowledgeGraph.queries.QuerySet import Q
-from openKnowledgeGraph.transformers.NodeTransformer import NodeTransformer
 
 
-class IndependentClauseTransformer(NodeTransformer):
+class IndependentClauseTransformer(GraphOperation):
     def __init__(self, **kwargs):
-        NodeTransformer.__init__(self, **kwargs)
+        GraphOperation.__init__(self, **kwargs)
 
     @staticmethod
     def get_name():

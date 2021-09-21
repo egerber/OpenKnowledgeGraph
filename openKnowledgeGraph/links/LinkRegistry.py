@@ -11,4 +11,3 @@ class LinkRegistry:
             return LinkRegistry.LinkTypes[link_type]
         else:
             return None
-            raise ValueError("Link type {} is not registered".format(link_type))

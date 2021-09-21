@@ -1,3 +1,4 @@
+from openKnowledgeGraph.transformers.GraphOperation import GraphOperation
 from openKnowledgeGraph.queries.QuerySet import Q
 from openKnowledgeGraph.transformers.ConstituentTransformers.AdjpTransformer import \
     AdjpTransformer
@@ -10,13 +11,12 @@ from openKnowledgeGraph.transformers.ConstituentTransformers.PPTransformer impor
 from openKnowledgeGraph.transformers.ConstituentTransformers.SbarTransformer import \
     SbarTransformer
 from openKnowledgeGraph.transformers.ConstituentTransformers.VPTransformer import VPTransformer
-from openKnowledgeGraph.transformers.NodeTransformer import NodeTransformer
 
 
-class ConstituentTransformer(NodeTransformer):
+class ConstituentTransformer(GraphOperation):
 
     def __init__(self, **kwargs):
-        NodeTransformer.__init__(self, **kwargs)
+        GraphOperation.__init__(self, **kwargs)
         self.advcl_transformer = AdvclTransformer()
         self.np_transformer = NPTransformer()
         self.pp_transformer = PPTransformer()
@@ -43,6 +43,12 @@ class ConstituentTransformer(NodeTransformer):
                 self.vp_transformer.apply(token)
             elif self.adjp_transformer.is_candidate(token):
                 self.adjp_transformer.apply(token)
+            else:
+                print("no logic for node")
+    
+    @staticmethod
+    def get_name():
+        return "constituent"
 
     def get_pattern(self):
-        return Q(type="token", dep="root")
+        return Q(type="dependency", dep="root")

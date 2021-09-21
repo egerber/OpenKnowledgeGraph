@@ -1,12 +1,13 @@
-from openKnowledgeGraph.links.Link import Link
-from openKnowledgeGraph.nodes.DecoratorNode import DecoratorNode
+from openKnowledgeGraph.nodes.Node import Node
 from openKnowledgeGraph.queries.QuerySet import Q
 
 
-class NerNode(DecoratorNode):
+class NerNode(Node):
+
+    type="ner"
 
     def __init__(self, label=None, **kwargs):
-        DecoratorNode.__init__(self, **kwargs)
+        Node.__init__(self, **kwargs)
         self._label = label
 
     @property
@@ -19,16 +20,3 @@ class NerNode(DecoratorNode):
     @property
     def label(self):
         return self._label
-
-    @staticmethod
-    def get_type():
-        return "ner"
-
-    @staticmethod
-    def create_for_core_node(core_node, label):
-        graph = core_node.get_graph()
-        ner_node = NerNode(label=label)
-        graph.add_node(ner_node)
-        graph.add_link(Link.create("decorator", ner_node, core_node))
-
-        return ner_node

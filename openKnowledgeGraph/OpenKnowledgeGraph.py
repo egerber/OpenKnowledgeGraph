@@ -1,4 +1,8 @@
 import bz2
+from openKnowledgeGraph.transformers.DependencyTransformer.DependencyTransformer import DependencyTransformer
+from openKnowledgeGraph.nodes.DependencyNode import DependencyNode
+from openKnowledgeGraph.links.LinkRegistry import LinkRegistry
+from openKnowledgeGraph.propertyRegistry.PropertyRegistry import PropertyRegistry
 import pickle
 import string
 from collections import defaultdict
@@ -10,20 +14,15 @@ import networkx as nx
 import matplotlib.pyplot as plt
 from spacy.tokens import Token
 
-from openKnowledgeGraph.nodes.highlevel.DocumentNode import DocumentNode
-from openKnowledgeGraph.nodes import DecoratorNode
 from openKnowledgeGraph.nodes import NodeRegistry
 from openKnowledgeGraph.index.Index import Index
 from openKnowledgeGraph.links.LinkDictionary import LinkDictionary
-from openKnowledgeGraph.links.CorefLink import CorefLink
 from openKnowledgeGraph.links.Link import Link
-from openKnowledgeGraph.nodes.highlevel.SentenceNode import SentenceNode
 from openKnowledgeGraph.selections.KnowledgeGraphSubset import KnowledgeGraphSubset
 from openKnowledgeGraph.selections.LinkSelection import LinkSelection
 from openKnowledgeGraph.selections.NodeSelection import NodeSelection
 from openKnowledgeGraph.nodes.TokenNode import TokenNode
 from openKnowledgeGraph.queries.QueryHelper import filter_entities
-from openKnowledgeGraph.transformers.Classification.PPTypeTransformer import PPTypeTransformer
 from openKnowledgeGraph.transformers.ConstituentTransformers.ConstituentTransformer import \
     ConstituentTransformer
 from openKnowledgeGraph.transformers.GraphOperation import GraphOperation
@@ -55,7 +54,7 @@ class OpenKnowledgeGraph:
 
         self._doc = None  # TODO remove later: only for debugging
 
-        self.properties_by_node_id = {}
+        #self.properties_by_node_id = {}
 
         self.index_by_type = Index("type")
 
@@ -66,8 +65,33 @@ class OpenKnowledgeGraph:
 
         self.id_counter = 0
 
+        #list of all graph operations that were executed
+        self._registered_components=[]
+
+        self.node_properties:PropertyRegistry=PropertyRegistry()
+        self.link_properties:PropertyRegistry=PropertyRegistry()
+
         self.init_id_prefix(''.join(
             random.SystemRandom().choice(string.ascii_lowercase + string.digits) for _ in range(PREFIX_LENGTH)))
+
+    def has_component(self,dependency):
+        return dependency in self._registered_components
+
+    def register_component(self, component_name):
+        if component_name in self._registered_components:
+            raise ValueError("Component '{}' was already executed on graph".format(component_name))
+        self._registered_components.append(component_name)
+
+    def check_dependency(self,component_name : string) -> bool:
+        """returns if component was already executed on graph
+
+        Args:
+            component_name (string): [description]
+
+        Returns:
+            bool: [description]
+        """        
+        return component_name in self._registered_components
 
     def init_id_prefix(self, prefix):
         '''
@@ -78,16 +102,15 @@ class OpenKnowledgeGraph:
         '''
         self.id_prefix = prefix
 
-    def generate_new_id(self):
+    def generate_new_id(self) -> str:
         id = self.id_counter
         self.id_counter += 1
 
         return "{}_{}".format(self.id_prefix, id)
 
-    def add_link(self, link, override_if_exists=False, assign_id=True):
-        link.set_graph(self)
-        if assign_id:
-            link.set_id(self.generate_new_id())
+    def add_link(self, link, override_if_exists=False, assign_id=False):
+        #if assign_id:
+        #    link.set_id(self.generate_new_id())
         self.link_dictionary.add(link, override_if_exists=override_if_exists)
 
     def add_links(self, links, override_if_exists=False):
@@ -118,17 +141,47 @@ class OpenKnowledgeGraph:
             print("WARNING: node id already in graph: ", node)
 
         if not node_exists or override_if_exists:
-            if assign_id:
-                node.set_id(self.generate_new_id())
+            #if assign_id:
+            #    node.set_id(self.generate_new_id())
             self.nodes_by_id[node.get_id()] = node
             # self.indices += node.get_indices()
-            node.set_graph(self)
         if not node_exists:
             self.index_by_type.add_entry(node.get_type(), node)
 
     def get_links_for_nodes(self, nodes):
         return [link for link in self.link_dictionary.get_links() if
                 link.get_source() in nodes or link.get_target() in nodes]
+
+    def get_property_for_node(self,node_id:str,key:str):
+        return self.node_properties.get_property_for_id(id=node_id,key=key)
+
+    def get_properties_for_node(self, node_id:str):
+        return self.node_properties.get_properties_for_id(id=node_id)
+
+    def node_has_property(self,node_id:str, key:str):
+        return self.node_properties.has_property(node_id,key)
+
+    def node_has_computed_property(self, node_id:str, key:str):
+        return self.node_properties.has_computed_property(node_id, key)
+
+    def link_has_property(self,link_id:str,key:str):
+        return self.link_properties.has_property(link_id, key)
+
+    def set_property_for_node(self,node_id:str,key:str,value):
+        self.node_properties.set_property_for_id(id=node_id,key=key,value=value)
+
+    def register_computed_property_for_node(self,node_id:str,computed_property_name:str):
+        self.node_properties.register_computed_property_for_id(id=node_id,key=computed_property_name)
+
+    def get_computed_property_for_node(self,node_id:str, computed_property_name:str):
+        if self.node_properties.has_computed_property(node_id, computed_property_name):
+            return self.get_node(node_id).__getattribute__(computed_property_name)
+
+    def set_property_for_link(self,link_id:str,key:str,value):
+        self.link_properties.set_property_for_id(id=link_id,key=key,value=value)
+
+    def get_property_for_link(self,link_id:str,key:str):
+        return self.link_properties.get_property_for_id(id=link_id,key=key)
 
     def get_nodes(self):
         return list(self.nodes_by_id.values())
@@ -140,14 +193,8 @@ class OpenKnowledgeGraph:
         MAX_NODE_SIZE = 2000
 
         NODE_COLORS_BY_TYPE = defaultdict(lambda: "grey", {
-            "triplet": "red",
-            "complex_triplet": "red",
-            "object": "blue",
-            "coref": "#dddddd",
-            "list": "#dddddd",
-            "subject_tuple": "yellow",
-            "object_tuple": "yellow",
-            "attribute": "green"
+            "token":"grey",
+            "vp":"red"
         })
 
         EDGE_COLORS_BY_TYPE = defaultdict(lambda: "grey", {
@@ -166,7 +213,6 @@ class OpenKnowledgeGraph:
 
         edge_list = [(link.get_source_id(), link.get_target_id()) for link in self.link_dictionary.get_links() if
                      filter_entities(link)]
-
         G = nx.Graph()
         for node in self.get_nodes():
             G.add_node(node.get_id())
@@ -176,7 +222,7 @@ class OpenKnowledgeGraph:
         count_inlinks_by_node = []
         for node_id in G.nodes:
             if node_id in self.nodes_by_id:
-                count_inlinks_by_node.append(len(self.get_node(node_id).get_inlinks_for_node()))
+                count_inlinks_by_node.append(len(self.get_node(node_id).find_in_links()))
             else:
                 count_inlinks_by_node.append(1)
 
@@ -187,7 +233,7 @@ class OpenKnowledgeGraph:
         for node_id in G.nodes:
 
             if node_id in self.nodes_by_id:
-                count_inlinks = len(self.get_node(node_id).get_inlinks_for_node())
+                count_inlinks = len(self.get_node(node_id).find_in_links())
                 node_sizes.append(MIN_NODE_SIZE + MAX_NODE_SIZE * (count_inlinks / (1 + max_count_inlinks)) / (
                         (min_count_inlinks + 1) / (1 + max_count_inlinks)))
                 labeldict[node_id] = self.nodes_by_id[node_id].get_text()
@@ -198,15 +244,15 @@ class OpenKnowledgeGraph:
         color_map_nodes = []
         for node_id in G:
             if node_id in self.nodes_by_id:
-                color_map_nodes.append(NODE_COLORS_BY_TYPE[self.nodes_by_id[node_id].get_type])
+                color_map_nodes.append(NODE_COLORS_BY_TYPE[self.nodes_by_id[node_id].type])
             else:
                 color_map_nodes.append('grey')
 
         color_map_edges = []
         width_map_edges = []
         for link in self.link_dictionary.get_links():
-            color_map_edges.append(EDGE_COLORS_BY_TYPE[link.get_type])
-            width_map_edges.append(EDGE_WIDTHS_BY_TYPE[link.get_type])
+            color_map_edges.append(EDGE_COLORS_BY_TYPE[link.type])
+            width_map_edges.append(EDGE_WIDTHS_BY_TYPE[link.type])
 
         plt.figure(0, figsize=(22 * scale_factor, 22 * scale_factor))
 
@@ -225,18 +271,8 @@ class OpenKnowledgeGraph:
     def get_links(self, *queries, **query_args):
         return filter_entities(self.link_dictionary.get_links(), *queries, **query_args)
 
-    def resolve_coreferences(self):
-        coref_links = [link for link in self.get_links() if isinstance(link, CorefLink)]
-
-        for coref_link in coref_links:
-            for inlink in coref_link.get_source().get_inlinks_for_node():
-                self.add_link(inlink.clone_with_properties(inlink.get_source_id(), coref_link.get_target_id()))
-                self.remove_link(inlink)
-            self.remove_link(coref_link)
-
     def filter_by_links(self, *queries, **query_args):
         link_selection = filter_entities(self.get_links(), *queries, **query_args)
-
         return self.subselection_from_links(link_selection)
 
     def filter_by_nodes(self, *queries, **query_args):
@@ -261,73 +297,132 @@ class OpenKnowledgeGraph:
                                     link_dictionary=LinkDictionary.create_from_links(filtered_links))
 
     def create_link(self, link_type, source, target, **kwargs):
-        new_link = Link.create(link_type, source, target, **kwargs)
+        properties=kwargs
+        if properties is None:
+            properties = {}
+        LinkClass = NodeRegistry.get_by_type(link_type)
+
+        link_id=self.generate_new_id()
+
+        properties['id']=link_id
+        properties['graph']=self
+        properties['type']=link_type
+
+        
+        LinkClass = LinkRegistry.get_by_type(type)
+
+        if source is None:
+            raise ValueError("source is None")
+        if target is None:
+            raise ValueError("target is None")
+
+        if not source.has_id():
+            raise ValueError(
+                "Cannot add link: source has has no id (probably because it was not yet added to the KnowledgeGraph)")
+        if not target.has_id():
+            raise ValueError(
+                "Cannot add link: target has has no id (probably because it was not yet added to the KnowledgeGraph)")
+
+        new_link=None
+        if LinkClass is not None:
+            new_link=LinkClass(source.get_id(), target.get_id(), **kwargs)
+        else:
+            from openKnowledgeGraph.links.CustomLink import CustomLink
+            new_link=CustomLink(link_type=link_type, source_id=source.get_id(), target_id=target.get_id(), **kwargs)
+
         self.add_link(new_link)
 
+        for prop,value in properties.items():
+            if prop=='id':
+                continue
+
+            self.set_property_for_link(link_id,prop,value)
+
         return new_link
+
+
+    def cl(self,*args,**kwargs):
+        '''
+        alias for create_link
+        '''
+        return self.create_link(*args,**kwargs)
 
     def create_node(self, node_type, properties=None):
         if properties is None:
             properties = {}
         NodeClass = NodeRegistry.get_by_type(node_type)
 
-        if NodeClass is not None:
-            new_node = NodeClass(**properties)
-        else:
-            from openKnowledgeGraph.nodes.CustomNode import CustomNode
-            new_node = CustomNode(node_type, **properties)
+        node_id=self.generate_new_id()
+        #properties['id']=node_id
+        #properties['graph']=self
+        #properties['type']=node_type
+
+
+        if NodeClass is None:
+            from openKnowledgeGraph.nodes.Node import Node
+            NodeClass=Node
+            
+        new_node = NodeClass(**{**properties,'id':node_id,'graph':self,'type':node_type})
+        for computed_property in NodeClass.get_computed_properties():
+            self.register_computed_property_for_node(new_node.get_id(), computed_property)
 
         self.add_node(new_node)
 
-        self.properties_by_node_id[new_node.get_id()] = properties
+        for prop,value in properties.items():
+            if prop=='id':
+                continue
+            self.set_property_for_node(node_id,prop,value)
+
+        #self.properties_by_node_id[new_node.get_id()] = properties
+
+        if len(list(self.node_properties.properties_by_id[node_id].keys()))==0:
+            raise Exception()
 
         return new_node
 
-    def create_decorator_node(self, source_node, node_type, **kwargs):
-        NodeClass = NodeRegistry.get_by_type(node_type)
+    def cn(self,*args,**kwargs):
+        '''
+        alias for create_node
+        '''
+        return self.create_node(*args,**kwargs)
 
-        if NodeClass is not None:
-            decorator_node = NodeClass(**kwargs)
-        else:
-            from openKnowledgeGraph.nodes.CustomDecoratorNode import CustomDecoratorNode
-            decorator_node = CustomDecoratorNode(node_type, **kwargs)
-        self.add_node(decorator_node)
-
-        DecoratorNode.create_decorator_link(decorator_node, source_node)
-        self.properties_by_node_id[decorator_node.get_id()] = kwargs
+    def create_decorator_node(self, source_node, node_type, properties=None):
+        decorator_node = self.create_node(node_type, properties)
+        self.create_link("decorator",source=decorator_node, target=source_node)
 
         return decorator_node
 
-    def create_reference_node(self, reference_node, node_type, **kwargs):
-        new_node = self.create_node(node_type, **kwargs)
+    def create_reference_node(self, reference_node, node_type, properties=None):
+        new_node = self.create_node(node_type, properties)
         self.create_link(link_type="reference", source=new_node, target=reference_node)
 
         return new_node
 
-    def process_dependency_nodes(self, doc):
+    def process_token_nodes(self, doc):
         Token.set_extension("token_node", default=None, force=True)
         last_sent_node = None
-        self.add_node(DocumentNode.from_spacy_doc(self,doc))
-        for index, sent in enumerate(doc.sents):
-            current_sent_node = SentenceNode.from_spacy_sent(self, sent)
+        self.create_node(node_type="document",properties={'text':doc.text})
+        for _, sent in enumerate(doc.sents):
+            current_sent_node = self.create_node(node_type="sentence",properties={'text':sent.text})
             if last_sent_node is not None:
-                self.add_link(Link.create("temporal", last_sent_node, current_sent_node))
+                self.create_link("temporal", last_sent_node, current_sent_node)
 
             for token in sent:
                 token_node = TokenNode.from_spacy_token(self, token)
                 doc[token.i]._.token_node = token_node
 
             root_node = sent.root._.token_node
-            self.add_link(Link.create("dependency", current_sent_node, root_node, dependency_type="root"))
+            self.create_link("dependency", current_sent_node, root_node, dependency_type="root")
 
             for token in sent:
                 for child in token.children:
-                    dep_link = Link.create("dependency", token._.token_node, child._.token_node,
+                    dep_link = self.create_link("dependency", token._.token_node, child._.token_node,
                                            dependency_type=child.dep_)
-                    self.add_link(dep_link)
 
             last_sent_node = current_sent_node
 
+        self.register_component("token")
+        
     def process_linked_entities(self, doc):
         for linked_entity in doc._.linkedEntities:
             entity_span = linked_entity.get_span()
@@ -337,8 +432,8 @@ class OpenKnowledgeGraph:
 
             if main_np is not None:
                 self.create_decorator_node(source_node=main_np, node_type="linked_entity",
-                                           entity_id=linked_entity.get_id(),
-                                           entity_label=linked_entity.get_label())
+                                           properties={'entity_id':linked_entity.get_id(),
+                                                        'entity_label':linked_entity.get_label()})
 
     def process_coref_pipeline(self, doc):
         successful_coref_resolutions = 0
@@ -361,7 +456,7 @@ class OpenKnowledgeGraph:
                             print("reference_np is None: '{} (index {})' ".format(reference, reference[0].i))
                         failed_coref_resolutions += 1
                     else:
-                        self.add_link(Link.create("coref", source=reference_np, target=main_np))
+                        self.create_link("coref", source=reference_np, target=main_np)
                         successful_coref_resolutions += 1
         if DEBUG:
             print("successful coref resolutions: {}".format(successful_coref_resolutions))
@@ -388,7 +483,7 @@ class OpenKnowledgeGraph:
                             print("reference_np is None: '{} (index {})' ".format(reference, reference[0].i))
                         failed_coref_resolutions += 1
                     else:
-                        self.add_link(Link.create("coref", source=reference_np, target=main_np))
+                        self.create_link("coref", source=reference_np, target=main_np)
                         successful_coref_resolutions += 1
         if DEBUG:
             print("successful coref resolutions: {}".format(successful_coref_resolutions))
@@ -398,44 +493,36 @@ class OpenKnowledgeGraph:
         constituency_transformer = ConstituentTransformer()
         constituency_transformer(self)
 
+
     @staticmethod
-    def from_spacy_doc(doc):
+    def from_spacy_doc(doc,components=None):
+        if components is None:
+            components=["token","dependency","constituent","coreference","independent_clause","ner"]
         graph = OpenKnowledgeGraph()
         graph._doc = doc
-        '''
-        DEPENDENCY TREE
-        '''
-        graph.process_dependency_nodes(doc)
 
-        '''
-        CONSTITUENT TREE
-        '''
+        if 'token' in components:
+            graph.process_token_nodes(doc)
 
-        graph.process_constituency_nodes()
+        if 'dependency' in components: 
+            dependency_transformer=DependencyTransformer()
+            dependency_transformer(graph)
 
-        '''
-        COREF DATA
-        '''
-        graph.process_coref_pipeline(doc)
+        if 'constituent' in components: 
+            graph.process_constituency_nodes()
 
-        '''
-        INDEPENDENT CLAUSE
-        '''
-        indepClauseTransformer = IndependentClauseTransformer()
-        indepClauseTransformer(graph)
+        if 'coref' in components:
+            graph.process_coref_pipeline(doc)
 
-        '''
-        NER TAGS
-        '''
-        graph.process_ner_labels(doc)
+        if 'independent' in components:
+            indepClauseTransformer = IndependentClauseTransformer()
+            indepClauseTransformer(graph)
 
-        pp_type_transformer = PPTypeTransformer()
-        pp_type_transformer(graph)
+        if 'ner' in components:
+            graph.process_ner_labels(doc)
 
-        '''
-        LINKED_ENTITIES
-        '''
-        graph.process_linked_entities(doc)
+        if 'linked_entities' in components:
+            graph.process_linked_entities(doc)
 
         return graph
 
@@ -454,8 +541,8 @@ class OpenKnowledgeGraph:
         for link in other_graph.get_links():
             self.add_link(link, override_if_exists=False, assign_id=False)
 
-        for node_id, property in other_graph.properties_by_node_id.items():
-            self.properties_by_node_id[node_id] = property
+        #for node_id, property in other_graph.properties_by_node_id.items():
+        #    self.properties_by_node_id[node_id] = property
 
         return self
 
@@ -524,7 +611,7 @@ class OpenKnowledgeGraph:
         return "<KnowledgeGraph with {} nodes and {} links>".format(len(self.link_dictionary), len(self.get_nodes()))
 
     @staticmethod
-    def from_text(text=None, coref=True, model='en_core_web_md', graph_operations=[]):
+    def from_text(text=None,model='en_core_web_md',components=None):
         '''
         initializes pipeline
         returns knowledge graph
@@ -546,7 +633,7 @@ class OpenKnowledgeGraph:
 
         nlp = PRE_LOADED_PIPELINES_BY_MODEL[model]
 
-        return OpenKnowledgeGraph.from_spacy_doc(nlp(text))
+        return OpenKnowledgeGraph.from_spacy_doc(nlp(text),components=components)
 
     def apply(self, graph_operation: GraphOperation):
         return graph_operation(self)

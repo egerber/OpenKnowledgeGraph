@@ -8,12 +8,10 @@ from openKnowledgeGraph.templates.TextPart import TextPart
 
 class VPNode(ConstituentNode):
 
+    type="vp"
+    
     def __init__(self, **kwargs):
         ConstituentNode.__init__(self, **kwargs)
-
-    @staticmethod
-    def get_type():
-        return "vp"
 
     def get_adjectives(self):
         pass
@@ -58,7 +56,7 @@ class VPNode(ConstituentNode):
     def from_token_node(token_node, override_deps=None):
         graph = token_node.graph
 
-        vp_node = VPNode()
+        vp_node = graph.create_node(node_type="vp")
         graph.add_node(vp_node)
 
         ConstituentNode.add_reference_link(vp_node, token_node)

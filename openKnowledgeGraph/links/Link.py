@@ -18,6 +18,15 @@ class Link(Entity):
     def get_target_id(self):
         return self._target_id
 
+    def set_property(self,key,value):
+        self.graph.set_property_for_link(self.id,key,value)
+
+    def get_property(self,key):
+        return self.graph.get_property_for_link(self.id,key)
+
+    def has_property(self,key):
+        return self.graph.link_has_property(self.id,key)
+
     @property
     def target_id(self):
         return self._target_id
@@ -60,6 +69,26 @@ class Link(Entity):
             "src": self.get_source_id(),
             "target": self.get_target_id()
         }
+
+
+    def set_property(self,key,value):
+        self.graph.set_property_for_link(self.id,key,value)
+
+    def get_property(self,key):
+        return self.graph.get_property_for_link(self.id,key)
+
+    def has_property(self,key):
+        return self.graph.link_has_property(self.id,key)
+
+    def __getattr__(self, name):
+        if self.has_property(name):
+            return self.get_property(name)
+        else:
+            try:
+                return self.__getattribute__(name)
+            except:
+                return None
+
 
     @staticmethod
     def create(type, source, target, **kwargs):

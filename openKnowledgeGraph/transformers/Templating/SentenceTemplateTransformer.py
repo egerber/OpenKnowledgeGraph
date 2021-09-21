@@ -1,8 +1,8 @@
+from openKnowledgeGraph.transformers.GraphOperation import GraphOperation
 from openKnowledgeGraph.queries.QuerySet import Q
 from openKnowledgeGraph.templates.Templates import Templates
 from openKnowledgeGraph.templates.TextPart import TextPart
 from openKnowledgeGraph.templates.Template import Template
-from openKnowledgeGraph.transformers.NodeTransformer import NodeTransformer
 
 
 def dep_to_argument_type(dep):
@@ -14,10 +14,10 @@ def dep_to_argument_type(dep):
         return "undefined"
 
 
-class SentenceTemplateTransformer(NodeTransformer):
+class SentenceTemplateTransformer(GraphOperation):
 
     def __init__(self, **kwargs):
-        NodeTransformer.__init__(self, **kwargs)
+        GraphOperation.__init__(self, **kwargs)
 
         from openKnowledgeGraph.transformers.Templating.AdjpTemplateTransformer import \
             AdjpTemplateTransformer

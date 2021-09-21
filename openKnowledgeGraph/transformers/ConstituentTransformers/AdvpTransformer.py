@@ -1,13 +1,13 @@
+from openKnowledgeGraph.transformers.GraphOperation import GraphOperation
 from openKnowledgeGraph.nodes.constituents.AdvpNode import AdvpNode
 from openKnowledgeGraph.queries.QuerySet import Q
-from openKnowledgeGraph.transformers.NodeTransformer import NodeTransformer
 from openKnowledgeGraph.transformers.ConstituentTransformers.ConstituentListTransformer import ConstituentListTransformer
 
 
-class AdvpTransformer(NodeTransformer):
+class AdvpTransformer(GraphOperation):
 
     def __init__(self, **kwargs):
-        NodeTransformer.__init__(self, **kwargs)
+        GraphOperation.__init__(self, **kwargs)
         self.advp_list_transformer = ConstituentListTransformer(node_type="advp")
 
     def is_candidate(self, node):
@@ -18,3 +18,7 @@ class AdvpTransformer(NodeTransformer):
             return self.advp_list_transformer.apply(node)
         else:
             return AdvpNode.from_token_node(node)
+
+    @staticmethod
+    def get_name():
+        return "advp"

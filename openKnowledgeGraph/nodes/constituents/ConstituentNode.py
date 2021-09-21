@@ -3,10 +3,8 @@ from typing import List
 import logging
 
 from openKnowledgeGraph.nodes import TokenNode
-from openKnowledgeGraph.links.Link import Link
 from openKnowledgeGraph.nodes.Node import Node
 from openKnowledgeGraph.nodes.NoneNode import NoneNode
-from openKnowledgeGraph.nodes.ReferenceNode import ReferenceNode
 from openKnowledgeGraph.queries.QuerySet import Q
 
 
@@ -14,14 +12,20 @@ def filter_none(arr):
     return [el for el in arr if el is not None]
 
 
-class ConstituentNode(ReferenceNode):
+class ConstituentNode(Node):
+
+    type="constituent"
 
     def __init__(self, **kwargs):
-        ReferenceNode.__init__(self, **kwargs)
+        Node.__init__(self, **kwargs)
+
+    @staticmethod
+    def get_computed_properties():
+        return ["is_coordination"]
 
     @property
     def root(self):
-        return self.get_reference()
+        return self.get_reference_node()
 
     @property
     def constituents(self):
@@ -63,7 +67,7 @@ class ConstituentNode(ReferenceNode):
         return self.find_out_links(type="constituent").target_nodes.filter(*queries, **query_args)
 
     def find_child_by_type(self, type):
-        arguments = self.find_out_links(type="constituent", attr__constituent_type=type).target_nodes
+        arguments = self.find_out_links(type="constituent", constituent_type=type).target_nodes
         if len(arguments) > 0:
             return arguments.first()
         else:
@@ -71,20 +75,16 @@ class ConstituentNode(ReferenceNode):
 
     @property
     def full_text(self):
-        nested_children = self.traverse_by_out_links(query=Q(type="constituent")).filter(type="token").order_by(
+        nested_children = self.traverse_by_out_links(query=Q(type__in=["list","constituent"])).filter(type="token").order_by(
             lambda node: node.i)
         full_text = [child.text for child in nested_children]
         return ' '.join(full_text)
 
     @staticmethod
-    def get_type():
-        return "constituent"
-
-    @staticmethod
     def add_reference_link(constituent_node, token_node):
         graph = token_node.graph
 
-        graph.add_link(Link.create("reference", constituent_node, token_node))
+        graph.create_link("reference", constituent_node, token_node)
 
     @staticmethod
     def link_constituents(constituent_node, token_node, override_deps=None):
@@ -123,14 +123,16 @@ class ConstituentNode(ReferenceNode):
 
         token_node.graph.create_link("constituent", source=constituent_node, target=token_node, constituent_type="leaf")
 
+        
+
     @property
     def is_coordination(self) -> bool:
         '''returns whether the phrase is a conjunctive/disjunctive coordination (X and Y, X or Y, ...)'''
-        return self.find_out_nodes(type="token", dep="cc").first() is not None
+        return self.find_out_links(type="list").count()>0
 
     def get_coordinates(self) -> List[ConstituentNode]:
         if self.is_coordination:
-            return self.find_out_links(type="constituent", attr__constituent_type="coordination").target_nodes
+            return self.find_out_links(type="list").target_nodes
         else:
             return [self]
 
@@ -153,10 +155,9 @@ class ConstituentNode(ReferenceNode):
             child_constituent = child_constituents.first()
 
         if child_constituent:
-            graph.add_link(
-                Link.create("constituent", constituent_node, child_constituent, constituent_type=token_node.dep))
+            graph.create_link("constituent", constituent_node, child_constituent, constituent_type=token_node.dep)
         else:
-            graph.add_link(Link.create("constituent", constituent_node, token_node, constituent_type="leaf"))
+            graph.create_link("constituent", constituent_node, token_node, constituent_type="leaf")
             # TODO register as leaf
             '''
             dep is no constituent (e.g. det, amod, punct, cc, etc.

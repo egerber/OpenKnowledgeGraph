@@ -1,17 +1,17 @@
+from openKnowledgeGraph.transformers.GraphOperation import GraphOperation
 from openKnowledgeGraph.nodes.constituents.VPNode import VPNode
 from openKnowledgeGraph.queries.QuerySet import Q
-from openKnowledgeGraph.transformers.NodeTransformer import NodeTransformer
 
 REFERENCE_WORDS_SUBJ = ["that", "who", "which", "where"]
 
 
-class RelclTransformer(NodeTransformer):
+class RelclTransformer(GraphOperation):
     '''
     converts relative clause (the woman, who wore the red dress, went away) -> the woman wore a red dress
     '''
 
     def __init__(self, **kwargs):
-        NodeTransformer.__init__(self, **kwargs)
+        GraphOperation.__init__(self, **kwargs)
 
     def apply(self, node, *args, **kwargs):
         return VPNode.from_token_node(token_node=node, override_deps=None)
@@ -41,3 +41,7 @@ class RelclTransformer(NodeTransformer):
 
     def get_pattern(self):
         return Q(type="token", dep="relcl")
+
+    @staticmethod
+    def get_name():
+        return "relcl"

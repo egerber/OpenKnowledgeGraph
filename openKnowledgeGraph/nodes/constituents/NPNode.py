@@ -1,3 +1,4 @@
+from openKnowledgeGraph.nodes.TokenNode import TokenNode
 from openKnowledgeGraph.links.Link import Link
 from openKnowledgeGraph.nodes.constituents.ConstituentNode import ConstituentNode
 from openKnowledgeGraph.queries.QuerySet import Q
@@ -5,6 +6,8 @@ from openKnowledgeGraph.templates.ArgumentPart import ArgumentPart
 
 
 class NPNode(ConstituentNode):
+
+    type="np"
 
     def __init__(self, **kwargs):
         ConstituentNode.__init__(self, **kwargs)
@@ -39,7 +42,7 @@ class NPNode(ConstituentNode):
             return self
 
     def get_preposition(self):
-        preposition_links = self._get_out_links_list(type="argument", attr__argument_type="preposition")
+        preposition_links = self._get_out_links_list(type="argument", argument_type="preposition")
         if len(preposition_links) > 0:
             return preposition_links[0].target
 
@@ -67,10 +70,6 @@ class NPNode(ConstituentNode):
     def compound_text(self):
         compounds = self.get_compounds()
         return ' '.join([c.text for c in compounds])
-
-    @staticmethod
-    def get_type():
-        return "np"
 
     @property
     def is_list(self):
@@ -102,9 +101,10 @@ class NPNode(ConstituentNode):
             return self.reference.number
 
     @staticmethod
-    def from_token_node(token_node):
+    def from_token_node(token_node: TokenNode):
         graph = token_node.get_graph()
-        np_node = NPNode(reference_node=token_node, voice=token_node.voice)
+        np_node = graph.create_node(node_type="np",properties={'reference_node':token_node, 
+            'voice': token_node.voice})
         graph.add_node(np_node)
 
         ConstituentNode.add_reference_link(np_node, token_node)

@@ -25,31 +25,63 @@ class Node(Entity):
         """
         return self.get_graph().get_outlinks_for_node(self, *queries, **query_args)
 
-    def get_properties(self):
-        pass
-
-    def add_property(self, property):
-        pass
-
     def __repr__(self):
-        return "<Node ({}): {}>".format(self.get_type(), self.get_text())
+        return "<Node ({}): {}>".format(self.type, self.get_text())
+
+    def has_reference_node(self):
+        return self.find_out_links(type="reference").count()>0
+
+    def get_reference_node(self):
+        return self.find_out_links(type="reference").target_nodes[0]
 
     def get_decorator_nodes(self):
         return self.find_in_links(type="decorator").source_nodes
 
-    def __getattr__(self, name):
-        if name.startswith('attr__'):
-            return self.get_attribute(name[6:])
+    def set_property(self,key,value):
+        self.graph.set_property_for_node(self.id,key,value)
+
+    def get_property(self,name):
+        '''
+        tries to resolve properties in the order
+        - registered(static) properties
+        - computed properties (@property methods)
+        - reference node properties
+        - decorated properties
+        '''
+
+        if self.graph.node_has_property(self.id,name):
+            #static properties
+            return self.graph.get_property_for_node(self.id,name)
+        elif self.has_computed_property(name):
+            #computed properties
+            return self.__getattribute__(name)
+        elif self.has_reference_node() and self.get_reference_node().has_property(name):
+            #reference nodes
+            return self.get_reference_node().get_property(name)
+        for decorator_node in self.get_decorator_nodes():
+            #decorator nodes
+            if decorator_node.has_property(name):
+                return decorator_node.get_property(name)
+        
+    def get_properties(self) -> dict:
+        return self.graph.get_properties_for_node(self.get_id())
+
+    def has_property(self,key):
+        if self.graph.node_has_property(self.id,key):
+            return True
+        elif self.graph.node_has_computed_property(self.id,key):
+            return True
+        elif self.has_reference_node():
+            return self.get_reference_node().has_property(key)
         else:
-            try:
-                return self.__getattribute__(name)
-            except:
-                decorators = self.get_decorator_nodes()
-                for decorator in decorators:
-                    decorator_attribute = decorator.__getattr__(name)
-                    if decorator_attribute:
-                        return decorator_attribute
-                return None  # default return if attribute does not exist
+            for decorator_node in self.get_decorator_nodes():
+                if decorator_node.has_property(key):
+                    return True
+
+        return False
+
+    def __getattr__(self, name):
+        return self.get_property(name)
 
     def _get_out_nodes_list(self):
         out_nodes = []
@@ -98,19 +130,22 @@ class Node(Entity):
         return LinkSelection(self.get_graph(), self._get_out_links_list())
 
     def find_links(self, *queries, **query_args):
+        '''
+        returns queried LinkSelection of all inlinks and outlinks
+        '''
         return LinkSelection(self.get_graph(), self._get_links_list(*queries, **query_args))
 
-    def find_link(self, *queries, **query_args):
-        links = LinkSelection(self.get_graph(), self._get_links_list(*queries, **query_args))
-        if len(links) > 0:
-            return links[0]
-        else:
-            return None
 
     def find_in_links(self, *queries, **query_args):
+        '''
+        returns queried LinkSelection of all inlinks
+        '''
         return LinkSelection(self.get_graph(), self._get_in_links_list(*queries, **query_args))
 
     def find_out_links(self, *queries, **query_args):
+        '''
+        returns queried LinkSelection of all outlinks
+        '''
         return LinkSelection(self.get_graph(), self._get_out_links_list(*queries, **query_args))
 
     def find_in_nodes(self, *queries, **query_args):

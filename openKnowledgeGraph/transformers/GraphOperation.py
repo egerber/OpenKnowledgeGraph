@@ -13,6 +13,8 @@ class GraphOperation:
         self.func_apply = apply
         self.custom_pattern = pattern
 
+        self.applied_operations=[]
+
     def find_candidate_nodes(self, graph):
         selection = graph.find_nodes(self._get_pattern())
         if self.limit is not None:
@@ -73,11 +75,16 @@ class GraphOperation:
 
         return _returned_values
 
+
     @staticmethod
     def get_name():
-        return "BaseNodeTransformer"
+        '''
+        name of the component, needs to be overriden
+        '''
+        raise NotImplementedError()
 
     def __call__(self, graph):
+        self.check_dependencies(graph)
         candidates = self.find_candidate_nodes(graph)
         if DEBUG:
             print("found {} candidates".format(len(candidates)))
@@ -87,10 +94,18 @@ class GraphOperation:
         for candidate in candidates:
             returned_values.append(self._apply(candidate))
 
+        self.register_self(graph)
+
         return self.after_apply(candidates, returned_values)
 
+    def check_dependencies(self,graph):
+        for dependency in self.get_dependencies():
+            if not graph.has_component(dependency):
+                raise ValueError("dependency '{}' could not be found but is a dependency for '{}'".format(dependency,self.get_name()))
+
+    def register_self(self,graph):
+        graph.register_component(self.get_name())
 
     @staticmethod
     def get_dependencies():
-        '''TODO check if '''
         return []
