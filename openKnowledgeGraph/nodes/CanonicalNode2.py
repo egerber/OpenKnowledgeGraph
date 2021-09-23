@@ -10,10 +10,10 @@ from openKnowledgeGraph.queries.QuerySet import Q
 
 
 
-class ConstituentNode2(Node):
+class CanonicalNode2(Node):
 
-    type="constituent2"
-    computed_properties=["full_text","is_coordination"]
+    type="canonical2"
+    computed_properties=["full_text"]
 
     def __init__(self, **kwargs):
         Node.__init__(self, **kwargs)
@@ -26,16 +26,8 @@ class ConstituentNode2(Node):
         return self.find_out_links(type="constituent").target_nodes
 
     @property
-    def is_coordination(self):
-        for child in self.children:
-            if child.dep=="conj":
-                return True
-
-        return False
-
-    @property
     def full_text(self):
-        nested_children = self.traverse_by_out_links(query=Q(type="constituent")).order_by(
+        nested_children = self.traverse_by_out_links(query=Q(type="constituent",dep__nin=["cc","conj"])).order_by(
             lambda node: node.i)
         
         full_text = [f'{child.text}{child.whitespace}' for child in nested_children]

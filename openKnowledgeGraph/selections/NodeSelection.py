@@ -101,7 +101,11 @@ class NodeSelection(EntitySelection):
             cloned_node=self.graph.create_node(node.type, properties=node.get_properties())
             new_nodes.append(cloned_node)
             for out_link in node.find_out_links(type="reference"):
-                self.graph.create_link(link_type=out_link.type,source=cloned_node, target=out_link.target)
+                self.graph.create_link(
+                    link_type=out_link.type,
+                    source=cloned_node, 
+                    target=out_link.target
+                )
 
         return NodeSelection(self.graph, new_nodes)
 

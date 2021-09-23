@@ -6,6 +6,7 @@ from openKnowledgeGraph.queries.QuerySet import Q
 class TokenNode(Node):
 
     type="token"
+    computed_properties=["full_text","voice","tense","number","negated"]
 
     def __init__(self, text=None, i=None, pos=None, lemma=None, dep=None, tag=None,whitespace=None,**kwargs):
         Node.__init__(self,**kwargs)
@@ -17,10 +18,6 @@ class TokenNode(Node):
         self.set_property('dep',dep)
         self.set_property('tag',tag)
         self.set_property('whitespace',whitespace)
-
-    @staticmethod
-    def get_computed_properties():
-        return ["full_text","voice","tense","number","negated"]
 
     def clean_fulltext(self,fulltext):
         pass

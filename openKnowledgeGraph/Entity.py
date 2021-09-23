@@ -9,6 +9,9 @@ class Entity:
     Base class for Nodes and Links
     """
 
+    type="base"
+    computed_properties=[]
+
     def __init__(self, graph=None,id=None, attributes=None,**kwargs):
         if attributes is None:
             attributes = {}
@@ -66,7 +69,7 @@ class Entity:
         '''
         returns whether node has property methods that return dynamic values
         '''
-        return key in self.get_computed_properties()
+        return key in self.computed_properties
 
     @property
     def preview(self):

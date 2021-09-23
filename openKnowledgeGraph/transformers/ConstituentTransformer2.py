@@ -15,7 +15,7 @@ from openKnowledgeGraph.transformers.ConstituentTransformers.VPTransformer impor
 
 
 class ConstituentTransformer2(GraphOperation):
-
+    
     def __init__(self, **kwargs):
         GraphOperation.__init__(self, **kwargs)
     
@@ -28,26 +28,34 @@ class ConstituentTransformer2(GraphOperation):
         elif node.matches(Q(dep="ccomp")):
             constituent_type="sbar" #sbar
         elif node.matches(Q(dep__in=["nsubj", "nsubjpass", "pobj", "dobj", "poss"]) | 
-            Q(pos__in=["noun", "propn", "pron"], dep__not="conj")):
+            Q(pos__in=["noun", "propn", "pron"])):
             constituent_type="np" #NP
         elif node.matches(Q(dep__in=["prep", "agent"])):
             constituent_type="pp" #PP
-        elif node.matches(Q(dep__not="conj") & (Q(dep="acomp") | Q(pos="adj"))):
+        elif node.matches(Q(dep="acomp") | Q(pos="adj")):
             constituent_type="advp" #advp
-        elif node.matches(Q(dep__in=["root", "ccomp", "relcl", "xcomp", "advcl"]) | Q(pos__in=["verb"],
-                                                                                         dep__not="conj") | Q(dep__not="conj",pos="aux",
-                                                                                                              lemma="be")):
+        elif node.matches(Q(type="dependency", dep__in=["root", "ccomp", "relcl", "xcomp", "advcl"]) | 
+                                                                                        Q(pos="verb") | 
+                                                                                        Q(pos="aux",lemma="be")):
             constituent_type="vp"
-        elif node.matches(Q(dep__not="conj") & (Q(dep="acomp") | Q(pos="adj"))):
+        elif node.matches(Q(dep="acomp") | Q(pos="adj")):
             constituent_type="adjp" #adjp
         else:
             print("no logic for node",node)
 
-        constituent=node.get_graph().create_reference_node(reference_node=node,node_type="constituent",properties={'constituent_type':constituent_type})
+        constituent=node.get_graph().create_reference_node(
+            reference_node=node,node_type="constituent2",
+            properties={'constituent_type':constituent_type}
+        )
        
         for token in node.find_out_links(type="dependency").target_nodes:
             child_constituent=self.apply(token,*args,**kwargs)
-            node.get_graph().create_link(link_type="constituent",source=constituent, target=child_constituent)
+            node.get_graph().create_link(
+                link_type="constituent",
+                source=constituent, 
+                target=child_constituent,
+                dep=child_constituent.dep
+            )
         
         return constituent
 

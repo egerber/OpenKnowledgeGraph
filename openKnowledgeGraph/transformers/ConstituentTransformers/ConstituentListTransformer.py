@@ -37,7 +37,6 @@ class ConstituentListTransformer(GraphOperation):
             list_elements=list_constituents)
         )
         
-        
         return elements
 
     @staticmethod

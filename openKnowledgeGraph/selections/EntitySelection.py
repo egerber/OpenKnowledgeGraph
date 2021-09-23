@@ -1,6 +1,6 @@
 from __future__ import annotations
 from collections import defaultdict
-from typing import Callable, Any
+from typing import Callable, Any, List
 
 from openKnowledgeGraph.Entity import Entity
 from openKnowledgeGraph.queries.QueryHelper import filter_entities
@@ -91,6 +91,21 @@ class EntitySelection:
             return self.create_selection(self.selected_entities[item])
         else:
             return self.selected_entities[item]
+
+    def get_property(self,prop) -> List:
+        '''
+        resolves the given property from each entity in the selection and returns array
+        '''
+        return [el.get_property(prop) for el in self]
+
+    def get_properties(self,props:list) -> List[List]:
+        return list(zip(*[self.get_property(prop) for prop in props]))            
+
+    def __getattr__(self,prop):
+        '''
+        redirects to get_property()
+        '''
+        return self.get_property(prop)
 
     def show_preview(self, n=MAX_PREVIEW_ITEMS):
         print(self._preview_items(n))

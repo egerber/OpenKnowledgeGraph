@@ -158,6 +158,9 @@ class OpenKnowledgeGraph:
     def get_properties_for_node(self, node_id:str):
         return self.node_properties.get_properties_for_id(id=node_id)
 
+    def get_properties_for_node(self, link_id:str):
+        return self.link_properties.get_properties_for_id(id=link_id)
+
     def node_has_property(self,node_id:str, key:str):
         return self.node_properties.has_property(node_id,key)
 
@@ -363,7 +366,7 @@ class OpenKnowledgeGraph:
             NodeClass=Node
             
         new_node = NodeClass(**{**properties,'id':node_id,'graph':self,'type':node_type})
-        for computed_property in NodeClass.get_computed_properties():
+        for computed_property in NodeClass.computed_properties:
             self.register_computed_property_for_node(new_node.get_id(), computed_property)
 
         self.add_node(new_node)
@@ -416,8 +419,10 @@ class OpenKnowledgeGraph:
 
             for token in sent:
                 for child in token.children:
-                    dep_link = self.create_link("dependency", token._.token_node, child._.token_node,
-                                           dependency_type=child.dep_)
+                    dep_link = self.create_link("dependency", 
+                        token._.token_node, 
+                        child._.token_node,
+                        dependency_type=child.dep_)
 
             last_sent_node = current_sent_node
 

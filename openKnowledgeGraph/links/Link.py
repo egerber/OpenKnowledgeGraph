@@ -27,6 +27,9 @@ class Link(Entity):
     def has_property(self,key):
         return self.graph.link_has_property(self.id,key)
 
+    def get_properties(self) -> dict:
+        return self.graph.get_properties_for_link(self.get_id())
+
     @property
     def target_id(self):
         return self._target_id

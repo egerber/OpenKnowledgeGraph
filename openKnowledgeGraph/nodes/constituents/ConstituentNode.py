@@ -15,13 +15,10 @@ def filter_none(arr):
 class ConstituentNode(Node):
 
     type="constituent"
+    computed_properties=["is_coordination"]
 
     def __init__(self, **kwargs):
         Node.__init__(self, **kwargs)
-
-    @staticmethod
-    def get_computed_properties():
-        return ["is_coordination"]
 
     @property
     def root(self):
@@ -121,7 +118,11 @@ class ConstituentNode(Node):
             if dep not in _registered_overriden_dependencies and override_node is not None:
                 ConstituentNode.link_constituent(constituent_node, override_node)
 
-        token_node.graph.create_link("constituent", source=constituent_node, target=token_node, constituent_type="leaf")
+        token_node.graph.create_link(
+            "constituent", 
+            source=constituent_node, 
+            target=token_node, 
+            constituent_type="leaf")
 
         
 
