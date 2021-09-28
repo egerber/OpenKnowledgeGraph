@@ -1,20 +1,9 @@
 from openKnowledgeGraph.nodes.Node import Node
 from openKnowledgeGraph.transformers.GraphOperation import GraphOperation
 from openKnowledgeGraph.queries.QuerySet import Q
-from openKnowledgeGraph.transformers.ConstituentTransformers.AdjpTransformer import \
-    AdjpTransformer
-from openKnowledgeGraph.transformers.ConstituentTransformers.AdvclTransformer import \
-    AdvclTransformer
-from openKnowledgeGraph.transformers.ConstituentTransformers.AdvpTransformer import \
-    AdvpTransformer
-from openKnowledgeGraph.transformers.ConstituentTransformers.NPTransformer import NPTransformer
-from openKnowledgeGraph.transformers.ConstituentTransformers.PPTransformer import PPTransformer
-from openKnowledgeGraph.transformers.ConstituentTransformers.SbarTransformer import \
-    SbarTransformer
-from openKnowledgeGraph.transformers.ConstituentTransformers.VPTransformer import VPTransformer
 
 
-class ConstituentTransformer2(GraphOperation):
+class ConstituentTransformer(GraphOperation):
     
     def __init__(self, **kwargs):
         GraphOperation.__init__(self, **kwargs)
@@ -41,10 +30,11 @@ class ConstituentTransformer2(GraphOperation):
         elif node.matches(Q(dep="acomp") | Q(pos="adj")):
             constituent_type="adjp" #adjp
         else:
-            print("no logic for node",node)
+            #TODO: check what to do when no logic for node exists
+            pass
 
         constituent=node.get_graph().create_reference_node(
-            reference_node=node,node_type="constituent2",
+            reference_node=node,node_type="constituent",
             properties={'constituent_type':constituent_type}
         )
        
@@ -61,7 +51,7 @@ class ConstituentTransformer2(GraphOperation):
 
     @staticmethod
     def get_name():
-        return "constituent2"
+        return "constituent"
 
     def get_pattern(self):
         return Q(type="token", dep="root")

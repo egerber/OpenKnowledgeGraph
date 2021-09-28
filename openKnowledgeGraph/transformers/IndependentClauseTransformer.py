@@ -1,3 +1,4 @@
+from __future__ import annotations
 from openKnowledgeGraph.transformers.GraphOperation import GraphOperation
 from openKnowledgeGraph.links.Link import Link
 from openKnowledgeGraph.nodes.highlevel.IndependentClauseNode import IndependentClauseNode

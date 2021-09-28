@@ -5,7 +5,7 @@ from openKnowledgeGraph.queries.QuerySet import Q
 
 class TokenNode(Node):
 
-    type="token"
+    name="token"
     computed_properties=["full_text","voice","tense","number","negated"]
 
     def __init__(self, text=None, i=None, pos=None, lemma=None, dep=None, tag=None,whitespace=None,**kwargs):
@@ -102,15 +102,3 @@ class TokenNode(Node):
         self._check_if_tag_exists()
         return self.tag in ["nn", "nnp"] or self.tag == "prp" and self.text.lower() in ["him", "his", "i", "you", "he",
                                                                                         "she", "it"]
-
-    @staticmethod
-    def from_spacy_token(graph, token):
-        token_node = graph.create_node(node_type="token", properties={"text": token.text,
-                                                                      "lemma": token.lemma_,
-                                                                      "i": token.i,
-                                                                      "pos": token.pos_.lower(),
-                                                                      "tag": token.tag_.lower(),
-                                                                      "dep": token.dep_.lower(),
-                                                                      "whitespace": token.whitespace_})
-
-        return token_node

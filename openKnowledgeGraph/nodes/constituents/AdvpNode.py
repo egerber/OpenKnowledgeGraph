@@ -4,7 +4,7 @@ from openKnowledgeGraph.templates.ArgumentPart import ArgumentPart
 
 class AdvpNode(ConstituentNode):
 
-    type="advp"
+    name="advp"
     
     def __init__(self, **kwargs):
         ConstituentNode.__init__(self, **kwargs)

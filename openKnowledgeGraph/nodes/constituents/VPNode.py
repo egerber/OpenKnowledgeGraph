@@ -8,7 +8,7 @@ from openKnowledgeGraph.templates.TextPart import TextPart
 
 class VPNode(ConstituentNode):
 
-    type="vp"
+    name="vp"
     
     def __init__(self, **kwargs):
         ConstituentNode.__init__(self, **kwargs)

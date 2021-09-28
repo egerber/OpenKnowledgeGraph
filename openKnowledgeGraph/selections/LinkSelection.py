@@ -1,3 +1,4 @@
+from __future__ import annotations
 from collections import defaultdict
 
 from openKnowledgeGraph.queries.QueryHelper import filter_entities
@@ -8,7 +9,7 @@ from openKnowledgeGraph.utils.listutils import unique_items
 
 class LinkSelection(EntitySelection):
 
-    def __init__(self, graph, selected_links):
+    def __init__(self, graph, selected_links=None):
         EntitySelection.__init__(self, graph, selected_links)
 
     def create_selection(self, items):
@@ -64,14 +65,18 @@ class LinkSelection(EntitySelection):
 
         return NodeSelection(self.graph, self._get_nodes_list())
 
-    def find_source_nodes(self, *queries, **query_args):
-        return self.source_nodes.filter(*queries, **query_args)
+    def find_source_nodes(self, query=None, **query_args):
+        return self.source_nodes.filter(query=query, **query_args)
 
-    def find_target_nodes(self, *queries, **query_args):
-        return self.target_nodes.filter(*queries, **query_args)
+    def find_target_nodes(self, query=None, **query_args):
+        return self.target_nodes.filter(query=query, **query_args)
 
-    def filter(self, *queries, **query_args):
-        return LinkSelection(self.graph, filter_entities(self.selected_entities, *queries, **query_args))
+    def filter(self, query=None, **query_args):
+        return LinkSelection(self.graph, filter_entities(self.selected_entities, query=query, **query_args))
+
+    def intersect(self, other_selection: LinkSelection) -> LinkSelection:
+        return super().intersect(other_selection)
+
 
     def order_by(self, sort_func=lambda node: node.get_id()):
         return LinkSelection(self.graph, sorted(self.selected_entities, key=sort_func))

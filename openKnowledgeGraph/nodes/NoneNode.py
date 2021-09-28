@@ -3,7 +3,7 @@ from openKnowledgeGraph.nodes.Node import Node
 
 class NoneNode(Node):
     
-    type="none"
+    name="none"
 
     def __init__(self, **kwargs):
         Node.__init__(self, **kwargs)

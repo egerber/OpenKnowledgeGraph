@@ -4,7 +4,7 @@ from openKnowledgeGraph.nodes.constituents.VPNode import VPNode
 
 class SbarNode(VPNode):
 
-    type="sbar"
+    name="sbar"
 
     def __init__(self, **kwargs):
         VPNode.__init__(self, **kwargs)

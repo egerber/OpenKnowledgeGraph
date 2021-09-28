@@ -7,6 +7,8 @@ DEBUG = os.environ.get('DEBUG', False)
 
 class GraphOperation:
 
+    pattern_based=True #TODO maybe add two subclasses for pattern based vs input based graph operations
+
     def __init__(self, apply=None, pattern=None, **kwargs):
         self.limit = kwargs.get('limit', None)
 
@@ -83,7 +85,7 @@ class GraphOperation:
         '''
         raise NotImplementedError()
 
-    def __call__(self, graph):
+    def __call__(self, graph, *args, **kwargs):
         self.check_dependencies(graph)
         candidates = self.find_candidate_nodes(graph)
         if DEBUG:
@@ -92,7 +94,7 @@ class GraphOperation:
 
         returned_values = []
         for candidate in candidates:
-            returned_values.append(self._apply(candidate))
+            returned_values.append(self._apply(candidate,*args, **kwargs))
 
         self.register_self(graph)
 

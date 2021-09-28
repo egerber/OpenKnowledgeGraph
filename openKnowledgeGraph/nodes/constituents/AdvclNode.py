@@ -5,7 +5,7 @@ from openKnowledgeGraph.nodes.constituents.VPNode import VPNode
 
 class AdvclNode(VPNode):
 
-    type="advcl"
+    name="advcl"
 
     def __init__(self, **kwargs):
         VPNode.__init__(self, **kwargs)\

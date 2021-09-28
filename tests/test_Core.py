@@ -1,3 +1,4 @@
+from openKnowledgeGraph.queries.QuerySet import Q
 import unittest
 import spacy
 
@@ -84,28 +85,13 @@ class TestCore(unittest.TestCase):
         
         self.assertEqual(cloned_node.get_properties(),node.get_properties())
 
-    def test_cloned_with_links(self):
+    def test_link_properties(self):
         graph=OpenKnowledgeGraph()
         node1=graph.create_node(node_type="custom",properties={'prop1':1,'prop2':'2'})
-        node2=graph.create_reference_node(reference_node=node1,node_type="custom",properties={'prop3':'three'})
-        self.assertEqual(node2.prop1,1)
-        self.assertEqual(node2.prop2,'2')
-        self.assertEqual(node2.prop3,'three')
-        cloned_node=graph.find_nodes(id=node2.id).clone_with_links().first()
-        self.assertEqual(cloned_node.prop3,'three')
-        self.assertEqual(cloned_node.prop1,1)
-        self.assertEqual(cloned_node.prop2,'2')
+        node2=graph.create_node(node_type="custom",properties={'prop1':1,'prop2':'2'})
+        link=graph.create_link(link_type="custom_link",source=node1,target=node2,prop1=10)
 
-    def test_clone_tree(self):
-        text="This is a test sentence, that I came up with"
-        graph=OpenKnowledgeGraph.from_text(text,model='en_core_web_sm')
-
-        self.assertEqual(graph.fn(type="token",dep="root").count(),1)
-
-        graph.fn().clone_with_links()
-        self.assertEqual(graph.fn(type="token",dep="root").count(),2)
-        self.assertEqual([vp.full_text for vp in graph.fn(type="token",dep="root")],[text,text])
-
+        self.assertEqual(node1.type,"custom")
 
 if __name__=='__main__':
     unittest.main()

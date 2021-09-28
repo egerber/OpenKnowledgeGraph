@@ -4,7 +4,7 @@ from openKnowledgeGraph.queries.QuerySet import Q
 
 class NerNode(Node):
 
-    type="ner"
+    name="ner"
 
     def __init__(self, label=None, **kwargs):
         Node.__init__(self, **kwargs)

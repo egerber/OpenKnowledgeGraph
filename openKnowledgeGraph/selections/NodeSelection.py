@@ -1,4 +1,5 @@
 from __future__ import annotations
+from openKnowledgeGraph.queries.QueryHelper import filter_entities
 from typing import TYPE_CHECKING
 from openKnowledgeGraph.selections.EntitySelection import EntitySelection
 from openKnowledgeGraph.selections.GroupedNodes import GroupedNodes
@@ -11,7 +12,7 @@ if TYPE_CHECKING:
 
 class NodeSelection(EntitySelection):
 
-    def __init__(self, graph, selected_nodes):
+    def __init__(self, graph, selected_nodes=None):
         EntitySelection.__init__(self, graph, selected_nodes)
 
     def create_selection(self, items):
@@ -49,14 +50,14 @@ class NodeSelection(EntitySelection):
     def in_links(self):
         return LinkSelection(self.graph, self._get_in_links_list())
 
-    def find_in_nodes(self, *queries, **query_args):
-        return self.in_nodes.filter(*queries, **query_args)
+    def find_in_nodes(self, query=None, **query_args):
+        return self.in_nodes.filter(query=query, **query_args)
 
-    def find_out_nodes(self, *queries, **query_args):
-        return self.out_nodes.filter(*queries, **query_args)
+    def find_out_nodes(self, query=None, **query_args):
+        return self.out_nodes.filter(query=query, **query_args)
 
-    def find_adjacent_nodes(self, *queries, **query_args):
-        return self.adjacent_nodes.filter(*queries, **query_args)
+    def find_adjacent_nodes(self, query=None, **query_args):
+        return self.adjacent_nodes.filter(query=query, **query_args)
 
     def first(self) -> Node:
         return super().first()
@@ -74,6 +75,9 @@ class NodeSelection(EntitySelection):
             in_nodes.append(link.source)
 
         return unique_items(in_nodes)
+
+    def filter(self, query=None, **query_args):
+        return NodeSelection(self.graph, filter_entities(self.selected_entities, query=query, **query_args))
 
     def _get_adjacent_nodes_list(self):
         adjacent_nodes = []
@@ -109,31 +113,15 @@ class NodeSelection(EntitySelection):
 
         return NodeSelection(self.graph, new_nodes)
 
-    def clone_with_links(self) -> NodeSelection:
-        '''
-        - creates cloned copy of nodes and adds them to the graph
-        - clones reference links to new node
-        - TODO check if it should copy ALL types of links or only 'reference'
-        - TODO dont copy nodes identical -> connections within group are duplicated so the cloned connections are within the cloned members
-        '''
-        cloned_nodes=self.clone()
-        for node,cloned_node in zip(self,cloned_nodes):
-            for out_link in node.out_links:
-                self.graph.create_link(link_type=out_link.type,source=cloned_node, target=out_link.target)
-            for in_link in node.in_links:
-                self.graph.create_link(link_type=in_link.type, source=in_link.source, target=cloned_node)
-        
-        return NodeSelection(self.get_graph(),cloned_nodes)
-
-    def ref_clone_with_links(self) -> NodeSelection:
-        pass
-
     @property
     def out_links(self):
         return LinkSelection(self.graph, self._get_out_links_list())
 
-    def find_links(self, *queries, **query_args):
-        return self.links.filter(*queries, **query_args)
+    def find_links(self, query=None, **query_args):
+        return self.links.filter(query=query, **query_args)
+
+    def intersect(self, other_selection: NodeSelection) -> NodeSelection:
+        return super().intersect(other_selection)
 
     def __repr__(self):
         return "<Node Selection with {} nodes>".format(len(self.selected_entities)) + self._preview_items()

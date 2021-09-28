@@ -21,7 +21,6 @@ class TestVP(unittest.TestCase):
             root=graph.fn(type="token",dep="root").first()
             self.assertEqual(root.full_text,text)
 
-    
 
 if __name__=='__main__':
     unittest.main()

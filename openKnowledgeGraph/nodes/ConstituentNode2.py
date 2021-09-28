@@ -12,7 +12,7 @@ from openKnowledgeGraph.queries.QuerySet import Q
 
 class ConstituentNode2(Node):
 
-    type="constituent2"
+    name="constituent"
     computed_properties=["full_text","is_coordination"]
 
     def __init__(self, **kwargs):

@@ -9,16 +9,17 @@ class Entity:
     Base class for Nodes and Links
     """
 
-    type="base"
+    name="base"
     computed_properties=[]
 
     def __init__(self, graph=None,id=None, attributes=None,**kwargs):
-        if attributes is None:
-            attributes = {}
-
         if graph is None:
             raise ValueError("reference to graph required, 'None' given")
-
+        if id is None:
+            raise ValueError("id cannot be None")
+        if attributes is None:
+            attributes = {}
+        
         self._graph = graph
         self.attributes = attributes
         self._id = id
@@ -81,9 +82,10 @@ class Entity:
 
     def get_id(self):
         return self._id
-
+    
     def __getattr__(self, name):
-        raise NotImplementedError()
+        return self.get_property(name)
+
 
     def get_type(self):
         return self.get_property("type")
@@ -112,8 +114,8 @@ class Entity:
     def serialize(self):
         return None
 
-    def matches(self, *queries, **query_args):
-        return len(filter_entities([self], *queries, **query_args)) > 0
+    def matches(self, query=None, **query_args):
+        return len(filter_entities([self], query=query, **query_args)) > 0
 
     def __getstate__(self):
         return self.__dict__

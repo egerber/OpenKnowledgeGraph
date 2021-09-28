@@ -6,7 +6,7 @@ from openKnowledgeGraph.templates.TextPart import TextPart
 
 class PPNode(ConstituentNode):
 
-    type="pp"
+    name="pp"
 
     def __init__(self, **kwargs):
         ConstituentNode.__init__(self, **kwargs)

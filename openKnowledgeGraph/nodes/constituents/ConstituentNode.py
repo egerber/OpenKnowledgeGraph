@@ -14,7 +14,7 @@ def filter_none(arr):
 
 class ConstituentNode(Node):
 
-    type="constituent"
+    name="constituent"
     computed_properties=["is_coordination"]
 
     def __init__(self, **kwargs):
@@ -60,8 +60,8 @@ class ConstituentNode(Node):
     def get_arguments(self):
         return self.find_out_links(type="constituent").target_nodes
 
-    def find_children(self, *queries, **query_args):
-        return self.find_out_links(type="constituent").target_nodes.filter(*queries, **query_args)
+    def find_children(self, query=None, **query_args):
+        return self.find_out_links(type="constituent").target_nodes.filter(query=query, **query_args)
 
     def find_child_by_type(self, type):
         arguments = self.find_out_links(type="constituent", constituent_type=type).target_nodes
@@ -150,7 +150,7 @@ class ConstituentNode(Node):
             '''
             coordination_constituents = child_constituents.filter(is_coordination=True)
             if len(coordination_constituents) != 1:
-                logging.error("could not identify root constituent for {}".format(token_node))
+                pass#logging.error("could not identify root constituent for {}".format(token_node))
             child_constituent = coordination_constituents.first()
         else:
             child_constituent = child_constituents.first()

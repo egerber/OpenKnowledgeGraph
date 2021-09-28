@@ -1,4 +1,4 @@
-from openKnowledgeGraph.nodes.CanonicalNode2 import CanonicalNode2
+from openKnowledgeGraph.nodes.CanonicalNode import CanonicalNode
 from .TokenNode import TokenNode
 from .NoneNode import NoneNode
 from .classifications.NerNode import NerNode
@@ -15,10 +15,10 @@ all_node_types = [
     NerNode, AdjpNode, AdvclNode, AdvpNode,
     ConstituentNode, NPNode, PPNode, SbarNode, VPNode, CanonicalVPNode,
     ConstituentNode2,
-    CanonicalNode2
+    CanonicalNode
 ]
 
 for node_type in all_node_types:
-    NodeRegistry.register_node(node_type.type, node_type)
+    NodeRegistry.register_node(node_type.name, node_type)
 
 __all__ = all_node_types + [NodeRegistry]

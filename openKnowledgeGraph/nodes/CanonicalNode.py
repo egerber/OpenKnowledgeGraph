@@ -1,18 +1,13 @@
 from __future__ import annotations
 from openKnowledgeGraph.selections.NodeSelection import NodeSelection
-from typing import List
-import logging
-
-from openKnowledgeGraph.nodes import TokenNode
 from openKnowledgeGraph.nodes.Node import Node
-from openKnowledgeGraph.nodes.NoneNode import NoneNode
 from openKnowledgeGraph.queries.QuerySet import Q
 
 
 
-class CanonicalNode2(Node):
+class CanonicalNode(Node):
 
-    type="canonical2"
+    name="canonical"
     computed_properties=["full_text"]
 
     def __init__(self, **kwargs):
@@ -27,7 +22,7 @@ class CanonicalNode2(Node):
 
     @property
     def full_text(self):
-        nested_children = self.traverse_by_out_links(query=Q(type="constituent",dep__nin=["cc","conj"])).order_by(
+        nested_children = self.traverse_by_out_links(query=Q(type="constituent")).order_by(
             lambda node: node.i)
         
         full_text = [f'{child.text}{child.whitespace}' for child in nested_children]

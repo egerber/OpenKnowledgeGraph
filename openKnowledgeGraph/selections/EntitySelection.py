@@ -1,5 +1,6 @@
 from __future__ import annotations
 from collections import defaultdict
+from openKnowledgeGraph.utils.listutils import unique_items
 from typing import Callable, Any, List
 
 from openKnowledgeGraph.Entity import Entity
@@ -11,9 +12,14 @@ MAX_PREVIEW_ITEMS = 10
 
 class EntitySelection:
 
-    def __init__(self, graph, selected_entities):
+    def __init__(self, graph, selected_entities=None):
+        if selected_entities is None:
+            selected_entities=[]
+        
         self.graph = graph
-        self.selected_entities = selected_entities
+        
+        #create unique entities
+        self.selected_entities = unique_items(selected_entities)
 
     def __iter__(self):
         for entity in self.selected_entities:
@@ -33,7 +39,7 @@ class EntitySelection:
             return None
 
     def get_entities(self):
-        return self.get_entities()
+        return self.selected_entities
 
     def create_selection(self, items):
         return EntitySelection(self.graph, items)
@@ -44,6 +50,9 @@ class EntitySelection:
     def apply(self, func: Callable[[Entity], Any]) -> Any:
         for entity in self.selected_entities:
             func(entity)
+
+    def filter(self, query=None, **query_args):
+        raise NotImplementedError()
 
     def limit(self, limit):
         return self.create_selection(self.selected_entities[:limit])
@@ -62,8 +71,12 @@ class EntitySelection:
 
         return self.create_grouped_selection(groups)
 
-    def filter(self, *queries, **query_args):
-        return self.create_selection(filter_entities(self.selected_entities, *queries, **query_args))
+    def filter(self, query=None, **query_args):
+        return self.create_selection(filter_entities(self.selected_entities, query=query, **query_args))
+    
+    def intersect(self, other_selection:EntitySelection) -> EntitySelection:
+        intersected_entities=[entity for entity in self.get_entities() if entity in other_selection]
+        return self.create_selection(intersected_entities)
 
     def order_by(self, sort_func: Callable[[Entity], Any] = lambda node: node.get_id(), order='asc'):
         reverse = False
@@ -123,10 +136,27 @@ class EntitySelection:
         return self.__len__()
 
     def append(self, entity) -> None:
+        '''
+        appends entity inline
+        '''
         self.selected_entities.append(entity)
 
     def reverse(self) -> EntitySelection:
         return self.create_selection(self.selected_entities[::-1])
+
+    def concat(self, other_selection:EntitySelection) -> None:
+        '''
+        concats other selection inline
+        '''
+        for entity in other_selection:
+            if entity not in self:
+                self.append(entity)
+    
+    def __contains__(self, entity):
+        '''
+        TODO: can be done more efficient by using dictionary and accessing only id attribute
+        '''
+        return entity in self.selected_entities
 
     def __add__(self, other_collection):
         return self.create_selection(self.selected_entities + other_collection.get_entities())
