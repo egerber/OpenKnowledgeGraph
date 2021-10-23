@@ -96,8 +96,8 @@ class TestCanonical(unittest.TestCase):
     def test_relcl(self):
         graph=self.get_graph_for_text(text="the women, who stands behind the house, wears a blue tshirt")
         canonical_sentences=[
-            'the women stands behind the house',
-            'the women wears a blue tshirt'
+            'the womenstands behind the house',
+            'the womenwears a blue tshirt'
         ]
 
         self.assertEqual(

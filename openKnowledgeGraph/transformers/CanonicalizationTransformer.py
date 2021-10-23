@@ -1,7 +1,9 @@
+from __future__ import annotations
+from typing import Dict, List, Tuple
 import itertools
 from openKnowledgeGraph import nodes
-
-from openKnowledgeGraph.nodes import CanonicalVPNode, Node
+from openKnowledgeGraph.nodes.Node import Node
+from openKnowledgeGraph.nodes import CanonicalVPNode
 from openKnowledgeGraph.transformers.GraphOperation import GraphOperation
 from openKnowledgeGraph.queries.QuerySet import Q
 
@@ -10,7 +12,6 @@ class CanonicalizationTransformer(GraphOperation):
 
     def __init__(self, canonicalize_properties=None, resolve_corefs=True, resolve_relcls=True, **kwargs):
         GraphOperation.__init__(self, **kwargs)
-        #self.consituent_list_transformer=ConstituentListTransformer2()
 
     def get_pattern(self):
         return Q(type="constituent",constituent_type="vp", dep="root")
@@ -27,20 +28,60 @@ class CanonicalizationTransformer(GraphOperation):
             cloned_constituent_subtree=coordination_element \
                 .traverse_graph_by_out_links(
                     query=Q(type="constituent",dep__not="cc",id__nin=coordination_selection.links.id)
-                ).clone_with_references()
+                ) \
+                .clone_with_references()
             
             cloned_root_constituent=cloned_constituent_subtree.nodes.first()
             cloned_coordination_elements.append(cloned_root_constituent)
 
         return cloned_coordination_elements
 
+    def get_canonicalized_vps_from_np(self, np:Node) -> Tuple[Node, List[Node]]:
+        canonicalized_np=np
+        canonical_vps=[]
+        
+        canonicalized_children=[]
+        ignore_children=[]
+        relcls=[]
+        has_nested_vp_node=False
+        for child in np.get_children():
+            if child.dep=="relcl":
+                has_nested_vp_node=True
+                relcls.append(child)
+                ignore_children.append(child)
+            elif child.dep=="punct": #maybe too restrictive
+                ignore_children.append(child)
+            else: #TODO deal with attr cases
+                canonicalized_children.append(child)
 
-    def apply(self, vp_node:Node, subject=None,*args, **kwargs):
+        if has_nested_vp_node:
+            cloned_subgraph=np.traverse_graph_by_out_links(
+                    query=Q(type="constituent",target_id__nin=[child.id for child in ignore_children])
+                ).clone_with_references()
+            canonicalized_np=cloned_subgraph.nodes.first()
+
+        for relcl in relcls:
+            canonical_vps+=self.apply(relcl, override_deps={'nsubj':canonicalized_np})
+
+        return (canonicalized_np,canonical_vps)
+    
+    def apply(self, vp_node:Node, subject=None,override_deps:Dict=None, *args, **kwargs):
         children=vp_node.get_children()
         child_deps=children.dep
-        if not ("nsubj" in child_deps or "nsubjpass" in child_deps) \
-            and subject is not None: #and vp_node does not have subject
+
+        if subject is not None and not ("nsubj" in child_deps or "nsubjpass" in child_deps):
+            '''replace or add given subject to the given vp'''
             children.append(subject)
+
+        if override_deps is not None and len(override_deps.keys())>0:
+            for override_dep_key, override_dep_value in override_deps.items():
+                override_children=[]
+                for child in children:
+                    if child.dep==override_dep_key:
+                        override_children.append(override_dep_value)
+                    else:
+                        override_children.append(child)
+                children=override_children
 
         exploded_children=[]
         canonical_nodes=[]
@@ -53,10 +94,21 @@ class CanonicalizationTransformer(GraphOperation):
                 canonical_nodes+=self.apply(vp_list_element,subject=subject)
         else:
             for child in children:
-                if child.is_coordination:
-                    exploded_children.append(self.get_list_elements(child))
-                elif child.dep=="relcl":
-                    self.apply(child,subject=subject)
+                if child.constituent_type=="np":
+                    if child.is_coordination:
+                        list_elements=self.get_list_elements(child)
+                        canonicalized_list_elements=[]
+                        for list_element in list_elements:
+                            canonicalized_list_element, canonicalized_child_vps=self.get_canonicalized_vps_from_np(list_element)
+                            canonicalized_list_elements.append(canonicalized_list_element)
+                            canonical_nodes+=canonicalized_child_vps
+                        exploded_children.append(canonicalized_list_elements)
+                    else:
+                        np,vps=self.get_canonicalized_vps_from_np(child)
+                        exploded_children.append([np])
+                        canonical_nodes+=vps
+                elif child.is_coordination:
+                        exploded_children.append(self.get_list_elements(child))
                 else:
                     exploded_children.append([child])
         
