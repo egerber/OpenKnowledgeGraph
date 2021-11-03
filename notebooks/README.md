@@ -1,5 +1,7 @@
 # Open-Knowledge-Graph
 
+![](https://cdn.pixabay.com/photo/2019/07/19/11/57/network-4348644_960_720.png)
+
 ## Introduction
 <code>OpenKnowledgeGraph</code> is a allows to represent texts as a graphs and allows to work with entities in a structured manner. Among other it has the following features
 * Split up Conjugational Sentences into simple parts
