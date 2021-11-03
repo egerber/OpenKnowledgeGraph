@@ -88,9 +88,6 @@ class GraphOperation:
     def __call__(self, graph, *args, **kwargs):
         self.check_dependencies(graph)
         candidates = self.find_candidate_nodes(graph)
-        if DEBUG:
-            print("found {} candidates".format(len(candidates)))
-            print(candidates)
 
         returned_values = []
         for candidate in candidates:

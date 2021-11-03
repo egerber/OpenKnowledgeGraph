@@ -104,29 +104,55 @@ class TestCanonical(unittest.TestCase):
             sorted(canonical_sentences),
             sorted(graph.fn(type="canonical").full_text)
         )
+    
+    def test_jupyter(self):
+        '''
+        testing if anything breaks with longer, more complex input
+        '''
+        with open('sample_texts/jupyter.md', 'r') as f:
+            text = ''.join(f.readlines())
+            
+            graph=self.get_graph_for_text(text)
+
+            for canonical_vp in graph.fn(type="canonical"):
+                print(canonical_vp.full_text)
+                print()
 
     def test_wiki_mccartney(self):
         '''
         testing if anything breaks with longer, more complex input
         '''
-        with open('sample_texts/mccartney.txt', 'r') as f:
+        with open('sample_texts/mccartney.md', 'r') as f:
             text = ''.join(f.readlines())
             
             graph=self.get_graph_for_text(text)
 
-            print(graph.fn(type="canonical").full_text)
+            for canonical_vp in graph.fn(type="canonical"):
+                print(canonical_vp.full_text)
+                print()
 
     def test_wiki_rickmorty(self):
         '''
         testing if anything breaks with longer, more complex input
         '''
-        with open('sample_texts/rickmorty.txt', 'r') as f:
+        with open('sample_texts/rickmorty.md', 'r') as f:
             text = ''.join(f.readlines())
             
             graph=self.get_graph_for_text(text)
 
             print(graph.fn(type="canonical").full_text)
+    
+    def test_advcl(self):
+        graph=self.get_graph_for_text("He went to the stadium, because he was hungry")
         
-        
+        canonical_vps=graph.fn(type="canonical")
+        self.assertEqual(sorted(canonical_vps.full_text), sorted(["He went to the stadium, ","because he was hungry"]))
+    
+    def test_ccomp(self):
+        pass
+
+    def test_appos(self):
+        pass
+
 if __name__=='__main__':
     unittest.main()

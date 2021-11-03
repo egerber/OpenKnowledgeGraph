@@ -1,10 +1,10 @@
+from __future__ import annotations
 from openKnowledgeGraph.selections.GraphSelection import GraphSelection
 from openKnowledgeGraph.Entity import Entity
 from openKnowledgeGraph.nodes import NodeRegistry
 from openKnowledgeGraph.selections.LinkSelection import LinkSelection
 from openKnowledgeGraph.selections.NodeSelection import NodeSelection
 from openKnowledgeGraph.utils.listutils import unique_items
-
 
 class Node(Entity):
 
@@ -41,6 +41,29 @@ class Node(Entity):
     def set_property(self,key,value):
         self.graph.set_property_for_node(self.id,key,value)
 
+    def set_nested_property(self, key, node: Node):
+        self.graph.set_nested_property_for_node(self.id, key, node.get_id())
+
+    def has_nested_property(self, key):
+        split_fields=key.split('__')
+        return self.graph.node_has_nested_property(self.id, split_fields[0])
+
+    def get_nested_property(self, key):
+        '''e.g resolves subject__text as subject.text'''
+        split_fields=key.split('__')
+        reference_field_id=self.get_graph().get_nested_property_for_node(self.id, split_fields[0]) #id for referenced node
+        
+        if reference_field_id is None: #nested field does not exist
+            return None
+
+        reference_node=self.get_graph().get_node(reference_field_id)
+
+        if len(split_fields)>1:
+            field2='__'.join(split_fields[1:])
+            return reference_node.get_property(field2)
+        else:
+            return reference_node
+    
     def get_property(self,name):
         '''
         tries to resolve properties in the order
@@ -53,6 +76,8 @@ class Node(Entity):
         if self.graph.node_has_property(self.id,name):
             #static properties
             return self.graph.get_property_for_node(self.id,name)
+        elif self.has_nested_property(name): #if name is registered as nested field e.g. subject in "node.subject.full_text"
+            return self.get_nested_property(name)
         elif self.has_computed_property(name):
             #computed properties
             return self.__getattribute__(name)

@@ -131,10 +131,10 @@ class OpenKnowledgeGraph:
     def get_links_for_node(self, node, query=None, **query_args):
         return filter_entities(self.link_dictionary.get_links_for_node(node), query=query, **query_args)
 
-    def get_node(self, node_id):
+    def get_node(self, node_id) -> Node:
         return self.node_dictionary[node_id]
 
-    def get_link(self, link_id):
+    def get_link(self, link_id) -> Link:
         return self.link_dictionary[link_id]
 
     def add_node(self, node, override_if_exists=False, assign_id=True):
@@ -154,6 +154,9 @@ class OpenKnowledgeGraph:
         return [link for link in self.link_dictionary.get_links() if
                 link.get_source() in nodes or link.get_target() in nodes]
 
+    def get_nested_property_for_node(self, node_id:str, key:str):
+        return self.node_properties.get_nested_property_for_id(id=node_id, key=key)
+
     def get_property_for_node(self,node_id:str,key:str):
         return self.node_properties.get_property_for_id(id=node_id,key=key)
 
@@ -169,11 +172,17 @@ class OpenKnowledgeGraph:
     def node_has_computed_property(self, node_id:str, key:str):
         return self.node_properties.has_computed_property(node_id, key)
 
+    def node_has_nested_property(self, node_id:str, key:str):
+        return self.node_properties.has_nested_property(node_id, key)
+
     def link_has_property(self,link_id:str,key:str):
         return self.link_properties.has_property(link_id, key)
 
     def set_property_for_node(self,node_id:str,key:str,value):
         self.node_properties.set_property_for_id(id=node_id,key=key,value=value)
+
+    def set_nested_property_for_node(self, node_id:str, key:str, value:str):
+        self.node_properties.set_nested_property_for_id(id=node_id, key=key, value=value)
 
     def register_computed_property_for_node(self,node_id:str,computed_property_name:str):
         self.node_properties.register_computed_property_for_id(id=node_id,key=computed_property_name)

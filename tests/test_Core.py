@@ -93,5 +93,15 @@ class TestCore(unittest.TestCase):
 
         self.assertEqual(node1.type,"custom")
 
+    def test_nested_properties(self):
+        graph=OpenKnowledgeGraph()
+        node1=graph.cn(node_type="custom",properties={'text':'Hello world!'})
+        node2=graph.cn(node_type="custom")
+        node2.set_nested_property("testfield",node1)
+        self.assertEqual(node2.get_property("testfield__text"),"Hello world!")
+        self.assertEqual(node2.testfield,node1)
+        self.assertEqual(node2.testfield.text,"Hello world!")
+        self.assertEqual(node2.get_property("nonexistentfield__text"),None)
+
 if __name__=='__main__':
     unittest.main()

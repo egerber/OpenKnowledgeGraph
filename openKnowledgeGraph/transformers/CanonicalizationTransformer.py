@@ -43,6 +43,8 @@ class CanonicalizationTransformer(GraphOperation):
         canonicalized_children=[]
         ignore_children=[]
         relcls=[]
+        attrs=[]
+
         has_nested_vp_node=False
         for child in np.get_children():
             if child.dep=="relcl":
@@ -51,17 +53,22 @@ class CanonicalizationTransformer(GraphOperation):
                 ignore_children.append(child)
             elif child.dep=="punct": #maybe too restrictive
                 ignore_children.append(child)
-            else: #TODO deal with attr cases
+            elif child.dep=="attr":
+                ignore_children.append(child) 
+            else: 
                 canonicalized_children.append(child)
 
         if has_nested_vp_node:
             cloned_subgraph=np.traverse_graph_by_out_links(
                     query=Q(type="constituent",target_id__nin=[child.id for child in ignore_children])
-                ).clone_with_references()
+                )
+            cloned_subgraph=cloned_subgraph.clone_with_references()
             canonicalized_np=cloned_subgraph.nodes.first()
 
         for relcl in relcls:
             canonical_vps+=self.apply(relcl, override_deps={'nsubj':canonicalized_np})
+        for attr in attrs:
+            canonical_vps+=[]
 
         return (canonicalized_np,canonical_vps)
     
@@ -107,6 +114,8 @@ class CanonicalizationTransformer(GraphOperation):
                         np,vps=self.get_canonicalized_vps_from_np(child)
                         exploded_children.append([np])
                         canonical_nodes+=vps
+                elif child.constituent_type=="advcl":
+                    self.apply(child)
                 elif child.is_coordination:
                         exploded_children.append(self.get_list_elements(child))
                 else:
